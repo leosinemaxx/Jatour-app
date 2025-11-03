@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AnimatedLayout from "./layout-animasi"; //
-import AnimatedBg from "./animasi-bg"; //
+import AnimatedLayout from "./layout-animasi";
+import AnimatedBg from "./animasi-bg";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Jatour App",
-  description: "Beautiful Login/Register UI",
+  description: "Login/Register UI",
 };
 
 export default function RootLayout({
@@ -25,15 +25,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-  <link rel="preload" as="image" href="/Bali-Pantai.webp" />
-  <link rel="preload" as="image" href="/semeru.webp" />
-  <link rel="preload" as="image" href="/main-bg.webp" />
-</head>
+        <link rel="preload" as="image" href="/Bali-Pantai.webp" />
+        <link rel="preload" as="image" href="/semeru.webp" />
+        <link rel="preload" as="image" href="/main-bg.webp" />
+      </head>
 
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 overflow-hidden`}
       >
-        <AnimatedLayout><AnimatedBg>{children}</AnimatedBg></AnimatedLayout>
+        
+        <AnimatedBg><AnimatedLayout>{children}</AnimatedLayout></AnimatedBg>
       </body>
     </html>
   );
