@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "email": "abc@jatour.test",
+      "password": "1234",
+      "fullName": "Admin",
+      "phone": "0"
+    },
+    {
+      "id": "b47e",
+      "email": "abc@abc.ab",
+      "password": "abc",
+      "fullName": "abc",
+      "phone": "08"
+    }
+  ]
+}
