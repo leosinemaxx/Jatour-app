@@ -33,16 +33,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 🔹 Restore session from localStorage saat pertama kali load
   useEffect(() => {
+  Promise.resolve().then(() => {
     const raw = localStorage.getItem("jatour_session");
     if (raw) {
       try {
-        setUser(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        setUser(parsed);
       } catch {
         localStorage.removeItem("jatour_session");
       }
     }
     setLoading(false);
-  }, []);
+  });
+}, []);
+
 
   // 🔹 SIGN UP
   async function signup(payload: {
@@ -90,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("jatour_session", JSON.stringify(u));
 
     // Redirect ke dashboard
-    router.push("/dashboard/page");
+    router.push("/dashboard");
   }
 
   // 🔹 SIGN OUT
