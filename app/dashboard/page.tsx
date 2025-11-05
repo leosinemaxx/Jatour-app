@@ -1,22 +1,24 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import ProtectedRoute from "../components/secure_route";
 import NavbarDash from "../components/navbar-dash";
 import DestCard from "../components/dest-card";
+import ExploreSection from "./section/feedpage"; // ✅ integrasi ExploreSection
 import { Destination, Itinerary } from "@/app/datatypes";
 import { apiFetch } from "@/lib/api";
 
 export default function DashboardPage() {
-  // state untuk tab navigasi
+  // 🔹 State tab navigasi
   const [activeTab, setActiveTab] = useState<"home" | "explore" | "plan" | "settings">("home");
 
-  // state untuk data
+  // 🔹 State data destinasi & itinerary
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // fetch data saat mount
+  // 🔹 Fetch data saat mount
   useEffect(() => {
     let mounted = true;
     Promise.all([apiFetch("/destinations"), apiFetch("/itineraries")])
@@ -33,7 +35,7 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // komponen untuk tiap tab
+  // 🔹 Konten tiap tab
   const renderSection = () => {
     switch (activeTab) {
       case "home":
@@ -52,6 +54,14 @@ export default function DashboardPage() {
                 </div>
               </>
             )}
+          </section>
+        );
+
+      case "explore":
+        // 🔹 Explore Section terintegrasi penuh
+        return (
+          <section className="pb-24">
+            <ExploreSection />
           </section>
         );
 
@@ -74,14 +84,6 @@ export default function DashboardPage() {
           </section>
         );
 
-      case "explore":
-        return (
-          <section>
-            <h1 className="text-2xl font-bold mb-4">Explore</h1>
-            <p className="text-slate-700">Discover new destinations and travel inspirations.</p>
-          </section>
-        );
-
       case "settings":
         return (
           <section>
@@ -95,7 +97,7 @@ export default function DashboardPage() {
     }
   };
 
-  // tampilan utama dashboard
+  // 🔹 Tampilan utama dashboard
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white text-slate-900 relative">

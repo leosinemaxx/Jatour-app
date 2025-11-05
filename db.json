@@ -37,7 +37,29 @@
     }
   ],
   "destinations": [
-    { "id": 1, "name": "Bromo", "city": "Probolinggo", "image": "/semeru.webp", "rating": 4.8 },
-    { "id": 2, "name": "Klayar Beach", "city": "Pacitan", "image": "/Bali-Pantai.webp", "rating": 4.7 }
+    {
+      "id": 1,
+      "name": "Bromo",
+      "city": "Probolinggo",
+      "category": "Mountain",
+      "image": "/public/Bali-Pantai",
+      "description": "Gunung Bromo terkenal dengan pemandangan matahari terbit yang menakjubkan."
+    },
+    {
+      "id": 2,
+      "name": "Kawah Ijen",
+      "city": "Banyuwangi",
+      "category": "Nature",
+      "image": "/public/Bali-Pantai",
+      "description": "Danau kawah berwarna biru kehijauan dengan fenomena api biru yang unik."
+    },
+    {
+      "id": 3,
+      "name": "Pantai Kuta",
+      "city": "Bali",
+      "category": "Beach",
+      "image": "/public/Bali-Pantai",
+      "description": "Salah satu pantai paling populer di Bali dengan ombak yang cocok untuk surfing."
+    }
   ]
 }
