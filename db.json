@@ -14,5 +14,30 @@
       "fullName": "abc",
       "phone": "08"
     }
+  ],
+  
+  "itineraries": [
+    {
+      "id": 1,
+      "title": "3D2N Surabaya - Bromo",
+      "startDate": "2025-08-20",
+      "endDate": "2025-08-22",
+      "city": "Surabaya",
+      "thumbnail": "/main-bg.webp",
+      "places": ["Taman Bungkul", "Gunung Bromo", "Penanjakan"]
+    },
+    {
+      "id": 2,
+      "title": "2D1N Pacitan Beach Trip",
+      "startDate": "2025-09-10",
+      "endDate": "2025-09-11",
+      "city": "Pacitan",
+      "thumbnail": "/Bali-Pantai.webp",
+      "places": ["Klayar", "Srau Beach"]
+    }
+  ],
+  "destinations": [
+    { "id": 1, "name": "Bromo", "city": "Probolinggo", "image": "/semeru.webp", "rating": 4.8 },
+    { "id": 2, "name": "Klayar Beach", "city": "Pacitan", "image": "/Bali-Pantai.webp", "rating": 4.7 }
   ]
 }

@@ -11,6 +11,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     if (!loading && !user) router.push("/signin");
   }, [loading, user, router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+
   return <>{children}</>;
 }
