@@ -1,16 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/secure_route";
 
 export default function Dashboard() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const session = localStorage.getItem("jatour_session");
-    if (!session) router.push("/signin");
-  }, [router]);
 
   return (
     <ProtectedRoute>

@@ -31,24 +31,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 🔹 Restore session from localStorage saat pertama kali load
+  // ✅ Restore session from localStorage saat pertama kali load
   useEffect(() => {
-  Promise.resolve().then(() => {
-    const raw = localStorage.getItem("jatour_session");
-    if (raw) {
+    const restoreSession = async () => {
       try {
-        const parsed = JSON.parse(raw);
-        setUser(parsed);
+        const raw = localStorage.getItem("jatour_session");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setUser(parsed);
+        }
       } catch {
         localStorage.removeItem("jatour_session");
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
-  });
-}, []);
+    };
+    restoreSession();
+  }, []);
 
-
-  // 🔹 SIGN UP
+  // ✅ SIGN UP
   async function signup(payload: {
     email: string;
     password: string;
@@ -59,32 +60,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Email dan password wajib diisi!");
 
     // Cek apakah user sudah terdaftar
-    const existing = await apiFetch(
-      `/users?email=${encodeURIComponent(payload.email)}`
-    );
-    if (existing && existing.length)
-      throw new Error("Email sudah terdaftar!");
+    const existing = await apiFetch(`/users?email=${encodeURIComponent(payload.email)}`);
+    if (existing && existing.length) throw new Error("Email sudah terdaftar!");
 
     // Simpan user baru
-    const created = await apiFetch("/users", {
+    await apiFetch("/users", {
       method: "POST",
       body: JSON.stringify(payload),
     });
 
-    // Redirect ke halaman signin setelah registrasi
     router.push("/signin");
-    return created;
   }
 
-  // 🔹 SIGN IN
+  // ✅ SIGN IN
   async function signin(payload: { email: string; password: string }) {
     if (!payload.email || !payload.password)
       throw new Error("Email dan password wajib diisi!");
 
     const found = await apiFetch(
-      `/users?email=${encodeURIComponent(
-        payload.email
-      )}&password=${encodeURIComponent(payload.password)}`
+      `/users?email=${encodeURIComponent(payload.email)}&password=${encodeURIComponent(payload.password)}`
     );
 
     if (!found || !found.length) throw new Error("Email atau password salah!");
@@ -93,11 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
     localStorage.setItem("jatour_session", JSON.stringify(u));
 
-    // Redirect ke dashboard
     router.push("/dashboard");
   }
 
-  // 🔹 SIGN OUT
+  // ✅ SIGN OUT
   function signout() {
     setUser(null);
     localStorage.removeItem("jatour_session");
