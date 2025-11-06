@@ -76,7 +76,7 @@
       "province": "East Java",
       "category": "Park",
       "rating": 4.5,
-      "image": "/destinations/taman-bungkul.jpg",
+      "image": "/destinations/main-bg.webp",
       "description": "A popular urban park in Surabaya with jogging tracks and recreational facilities.",
       "coordinates": {
         "lat": -7.2897,
@@ -96,7 +96,7 @@
       "province": "East Java",
       "category": "Mountain",
       "rating": 4.8,
-      "image": "/destinations/bromo.jpg",
+      "image": "/destinations/semeru.webp",
       "description": "Active volcano with stunning sunrise views and otherworldly landscapes.",
       "coordinates": {
         "lat": -7.9425,
@@ -116,7 +116,7 @@
       "province": "East Java",
       "category": "Nature",
       "rating": 4.7,
-      "image": "/destinations/ijen.jpg",
+      "image": "/destinations/semeru.webp",
       "description": "Famous for its blue fire phenomenon and turquoise acidic crater lake.",
       "coordinates": {
         "lat": -8.0583,
@@ -136,7 +136,7 @@
       "province": "East Java",
       "category": "Beach",
       "rating": 4.6,
-      "image": "/destinations/klayar.jpg",
+      "image": "/destinations/Bali-Pantai.webp",
       "description": "Beautiful beach with unique rock formations and natural sea fountain.",
       "coordinates": {
         "lat": -8.2553,
@@ -156,7 +156,7 @@
       "province": "Central Java",
       "category": "Temple",
       "rating": 4.9,
-      "image": "/destinations/borobudur.jpg",
+      "image": "/destinations/main-bg.webp",
       "description": "The world's largest Buddhist temple and UNESCO World Heritage Site.",
       "coordinates": {
         "lat": -7.6079,
@@ -176,7 +176,7 @@
       "province": "Yogyakarta",
       "category": "Shopping",
       "rating": 4.4,
-      "image": "/destinations/malioboro.jpg",
+      "image": "/destinations/main-bg.webp",
       "description": "Famous shopping street in Yogyakarta with traditional crafts and street food.",
       "coordinates": {
         "lat": -7.7926,

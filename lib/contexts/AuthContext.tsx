@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { User } from "@/app/datatypes";
+import { UserProfile as User } from "@/app/datatypes";
 import { userAPI } from "@/lib/api";
 import { storage } from "@/lib/utils";
 
