@@ -3,6 +3,15 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.x-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![Vercel](https://img.shields.io/badge/Deploy%20on-Vercel-000?style=flat-square&logo=vercel)](https://vercel.com/new)
 
+# Team 
+
+- Nabilhisyam Y. Setyanto
+- Lanang Tegar Augurio Wardana 
+- M Alden Naryama 
+- Kayla Safiya Andhita 
+- Aisya Alhena Dinar 
+
+
 This is a **Next.js** project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), fully ready for **modern web-application development** with React 18+, TypeScript, and optimized performance.
 
 ---
