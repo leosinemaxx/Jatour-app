@@ -10,7 +10,7 @@ export interface DestCardProps<T extends Destination> {
 
 export default function DestCard<T extends Destination>({ item, className }: DestCardProps<T>) {
   // fallback simple jika image kosong
-  const bg = item.image ?? "/main-bg.webp";
+  const bg = item.image ?? "/public/main-bg.webp";
 
   return (
     <article
