@@ -2,17 +2,334 @@
   "users": [
     {
       "id": "1",
-      "email": "abc@jatour.test",
+      "email": "alden@jatour.test",
       "password": "1234",
-      "fullName": "Admin",
-      "phone": "0"
+      "fullName": "Alden",
+      "phone": "081-1309-090-093",
+      "profilePicture": "/avatars/default.jpg",
+      "preferences": {
+        "language": "id",
+        "notifications": true,
+        "theme": "light"
+      },
+      "createdAt": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "itineraries": [
+    {
+      "id": "1",
+      "userId": "1",
+      "title": "Surabaya, Indonesia",
+      "destination": "Surabaya",
+      "startDate": "2025-11-08",
+      "endDate": "2025-11-10",
+      "thumbnail": "/destinations/surabaya.jpg",
+      "status": "upcoming",
+      "days": [
+        {
+          "day": 1,
+          "date": "2025-11-08",
+          "activities": [
+            {
+              "id": "a1",
+              "time": "09:00",
+              "title": "Visit Tugu Pahlawan",
+              "location": "Tugu Pahlawan",
+              "duration": 120,
+              "category": "sightseeing"
+            }
+          ]
+        }
+      ],
+      "createdAt": "2025-11-01T00:00:00Z"
     },
     {
-      "id": "b47e",
-      "email": "abc@abc.ab",
-      "password": "abc",
-      "fullName": "abc",
-      "phone": "08"
+      "id": "2",
+      "userId": "1",
+      "title": "Yogyakarta, Indonesia",
+      "destination": "Yogyakarta",
+      "startDate": "2025-11-15",
+      "endDate": "2025-11-17",
+      "thumbnail": "/destinations/yogyakarta.jpg",
+      "status": "upcoming",
+      "days": [],
+      "createdAt": "2025-11-02T00:00:00Z"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "title": "Malang, Indonesia",
+      "destination": "Malang",
+      "startDate": "2025-11-20",
+      "endDate": "2025-11-22",
+      "thumbnail": "/destinations/malang.jpg",
+      "status": "upcoming",
+      "days": [],
+      "createdAt": "2025-11-03T00:00:00Z"
+    }
+  ],
+  "destinations": [
+    {
+      "id": "1",
+      "name": "Taman Bungkul",
+      "city": "Surabaya",
+      "province": "East Java",
+      "category": "Park",
+      "rating": 4.5,
+      "image": "/destinations/main-bg.webp",
+      "description": "A popular urban park in Surabaya with jogging tracks and recreational facilities.",
+      "coordinates": {
+        "lat": -7.2897,
+        "lng": 112.7385
+      },
+      "price": {
+        "min": 0,
+        "max": 50000,
+        "currency": "IDR"
+      },
+      "featured": true
+    },
+    {
+      "id": "2",
+      "name": "Gunung Bromo",
+      "city": "Probolinggo",
+      "province": "East Java",
+      "category": "Mountain",
+      "rating": 4.8,
+      "image": "/destinations/semeru.webp",
+      "description": "Active volcano with stunning sunrise views and otherworldly landscapes.",
+      "coordinates": {
+        "lat": -7.9425,
+        "lng": 112.9531
+      },
+      "price": {
+        "min": 350000,
+        "max": 500000,
+        "currency": "IDR"
+      },
+      "featured": true
+    },
+    {
+      "id": "3",
+      "name": "Kawah Ijen",
+      "city": "Banyuwangi",
+      "province": "East Java",
+      "category": "Nature",
+      "rating": 4.7,
+      "image": "/destinations/semeru.webp",
+      "description": "Famous for its blue fire phenomenon and turquoise acidic crater lake.",
+      "coordinates": {
+        "lat": -8.0583,
+        "lng": 114.2425
+      },
+      "price": {
+        "min": 400000,
+        "max": 600000,
+        "currency": "IDR"
+      },
+      "featured": true
+    },
+    {
+      "id": "4",
+      "name": "Pantai Klayar",
+      "city": "Pacitan",
+      "province": "East Java",
+      "category": "Beach",
+      "rating": 4.6,
+      "image": "/destinations/Bali-Pantai.webp",
+      "description": "Beautiful beach with unique rock formations and natural sea fountain.",
+      "coordinates": {
+        "lat": -8.2553,
+        "lng": 111.2461
+      },
+      "price": {
+        "min": 10000,
+        "max": 25000,
+        "currency": "IDR"
+      },
+      "featured": false
+    },
+    {
+      "id": "5",
+      "name": "Candi Borobudur",
+      "city": "Magelang",
+      "province": "Central Java",
+      "category": "Temple",
+      "rating": 4.9,
+      "image": "/destinations/main-bg.webp",
+      "description": "The world's largest Buddhist temple and UNESCO World Heritage Site.",
+      "coordinates": {
+        "lat": -7.6079,
+        "lng": 110.2038
+      },
+      "price": {
+        "min": 50000,
+        "max": 375000,
+        "currency": "IDR"
+      },
+      "featured": true
+    },
+    {
+      "id": "6",
+      "name": "Malioboro",
+      "city": "Yogyakarta",
+      "province": "Yogyakarta",
+      "category": "Shopping",
+      "rating": 4.4,
+      "image": "/destinations/main-bg.webp",
+      "description": "Famous shopping street in Yogyakarta with traditional crafts and street food.",
+      "coordinates": {
+        "lat": -7.7926,
+        "lng": 110.3656
+      },
+      "price": {
+        "min": 0,
+        "max": 100000,
+        "currency": "IDR"
+      },
+      "featured": false
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "1",
+      "userId": "1",
+      "destinationId": "2",
+      "title": "Trip Destination",
+      "type": "destination",
+      "priority": 1
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "destinationId": "5",
+      "title": "Top Destination",
+      "type": "destination",
+      "priority": 2
+    }
+  ],
+  "weather": [
+    {
+      "id": "1",
+      "city": "Surabaya",
+      "temperature": 22,
+      "condition": "Partly Cloudy",
+      "icon": "partly-cloudy",
+      "humidity": 75,
+      "windSpeed": 12,
+      "timestamp": "2025-11-06T09:41:00Z"
+    },
+    {
+      "id": "2",
+      "city": "Rajopenang",
+      "temperature": 27,
+      "condition": "Cloudy",
+      "icon": "cloudy",
+      "forecast": "Expect For Cloudy Skies",
+      "timestamp": "2025-11-06T09:00:00Z"
+    }
+  ],
+  "wallet": [
+    {
+      "id": "1",
+      "userId": "1",
+      "balance": 1000000,
+      "currency": "IDR",
+      "cards": [
+        {
+          "id": "card1",
+          "type": "debit",
+          "lastFourDigits": "1234",
+          "bankName": "Bank Mandiri",
+          "isDefault": true
+        }
+      ]
+    }
+  ],
+  "transactions": [
+    {
+      "id": "t1",
+      "userId": "1",
+      "walletId": "1",
+      "type": "expense",
+      "amount": 150000,
+      "description": "Hotel booking - Surabaya",
+      "category": "accommodation",
+      "date": "2025-11-05T14:30:00Z",
+      "itineraryId": "1"
+    },
+    {
+      "id": "t2",
+      "userId": "1",
+      "walletId": "1",
+      "type": "topup",
+      "amount": 500000,
+      "description": "Top up via GoPay",
+      "category": "topup",
+      "date": "2025-11-04T10:15:00Z",
+      "method": "gopay"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n1",
+      "userId": "1",
+      "title": "Upcoming Trip Reminder",
+      "message": "Your trip to Surabaya starts in 2 days!",
+      "type": "reminder",
+      "read": false,
+      "createdAt": "2025-11-06T08:00:00Z",
+      "relatedId": "1",
+      "relatedType": "itinerary"
+    },
+    {
+      "id": "n2",
+      "userId": "1",
+      "title": "Payment Successful",
+      "message": "Your payment of IDR 150,000 was successful",
+      "type": "transaction",
+      "read": true,
+      "createdAt": "2025-11-05T14:30:00Z",
+      "relatedId": "t1",
+      "relatedType": "transaction"
+    }
+  ],
+  "categories": [
+    {
+      "id": "1",
+      "name": "Beach",
+      "icon": "beach",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "2",
+      "name": "Mountain",
+      "icon": "mountain",
+      "color": "#10B981"
+    },
+    {
+      "id": "3",
+      "name": "Temple",
+      "icon": "temple",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "4",
+      "name": "Nature",
+      "icon": "nature",
+      "color": "#22C55E"
+    },
+    {
+      "id": "5",
+      "name": "Park",
+      "icon": "park",
+      "color": "#84CC16"
+    },
+    {
+      "id": "6",
+      "name": "Shopping",
+      "icon": "shopping",
+      "color": "#EC4899"
     }
   ]
 }
