@@ -29,7 +29,7 @@ import {
   CircleCheck
 } from "lucide-react";
 import Image from "next/image";
-import GoogleMapView from "@/components/maps/GoogleMapView";
+import OpenStreetMapView from "@/components/maps/OpenStreetMapView";
 import ReviewList from "@/components/reviews/review-list";
 import { apiClient } from "@/lib/api-client";
 import type { Destination } from "@/app/datatypes";
@@ -347,7 +347,7 @@ export default function DestinationDetailModal({
                 </Card>
               )}
 
-              {/* Google Maps */}
+              {/* OpenStreetMap */}
               {coordinates && (
                 <Card>
                   <CardContent className="p-0">
@@ -357,7 +357,7 @@ export default function DestinationDetailModal({
                         Location on Map
                       </h3>
                     </div>
-                    <GoogleMapView
+                    <OpenStreetMapView
                       lat={coordinates.lat}
                       lng={coordinates.lng}
                       name={destination.name}

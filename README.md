@@ -4,7 +4,7 @@ A comprehensive travel planning application for Jawa Timur, Indonesia, built wit
 
 ## ✨ Features
 
-- 🗺️ **Interactive Google Maps** - View destinations on interactive maps
+- 🗺️ **Interactive OpenStreetMap** - View destinations on interactive maps (completely free!)
 - 📍 **15+ Jawa Timur Destinations** - Comprehensive database with detailed information
 - ⭐ **Review System** - User reviews and ratings
 - 💰 **Budget Planner** - Smart budget calculation and planning
@@ -36,7 +36,7 @@ A comprehensive travel planning application for Jawa Timur, Indonesia, built wit
    NEXT_PUBLIC_API_URL="http://localhost:3001"
    FRONTEND_URL="http://localhost:3000"
    PORT=3001
-   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your_google_maps_api_key"
+   # OpenStreetMap - No API key needed! Works out of the box.
    ```
 
 3. **Create PostgreSQL database:**
@@ -85,7 +85,7 @@ jatour-app/
 │   └── ...
 ├── components/           # Shared UI components
 │   ├── ui/              # shadcn/ui components
-│   ├── maps/            # Google Maps components
+│   ├── maps/            # OpenStreetMap components
 │   └── reviews/         # Review components
 ├── server/              # NestJS backend
 │   └── src/
@@ -124,7 +124,9 @@ The application uses PostgreSQL with Prisma ORM. The database includes:
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, Framer Motion
 - **Backend:** NestJS, Prisma ORM, PostgreSQL
 - **UI Components:** shadcn/ui, Radix UI
-- **Maps:** Google Maps API
+- **Maps:** Leaflet with OpenStreetMap (completely free, no API key required)
+- **Transportation APIs:** Gojek, Grab, Bluebird, Traveloka, RedBus
+- **Content APIs:** TripAdvisor, Airbnb
 - **HTTP Client:** Axios
 
 ## 📝 License

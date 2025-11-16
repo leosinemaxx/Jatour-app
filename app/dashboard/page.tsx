@@ -13,7 +13,7 @@ import PlannerSection from "./section/plannerpage";
 import ItinerarySection from "./section/itinerarypage";
 import SettingsSection from "./section/settingspage";
 import { Destination, Itinerary } from "@/app/datatypes";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
 
 export default function DashboardPage() {
   // 🔹 State tab navigasi

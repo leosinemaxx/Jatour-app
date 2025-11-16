@@ -23,10 +23,42 @@ let UsersController = class UsersController {
         this.usersService = usersService;
     }
     async register(createUserDto) {
-        return this.usersService.create(createUserDto);
+        try {
+            console.log('Registration request received:', { email: createUserDto.email, fullName: createUserDto.fullName });
+            const result = await this.usersService.create(createUserDto);
+            console.log('Registration successful:', result.id);
+            return result;
+        }
+        catch (error) {
+            console.error('Registration error details:', {
+                message: error?.message,
+                stack: error?.stack,
+                name: error?.name,
+                response: error?.response,
+            });
+            if (error instanceof common_1.ConflictException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException(error?.message || 'Failed to create user account');
+        }
     }
     async login(loginDto) {
-        return this.usersService.login(loginDto);
+        try {
+            console.log('Login request received for:', loginDto.email);
+            const result = await this.usersService.login(loginDto);
+            console.log('Login successful, returning user data');
+            return result;
+        }
+        catch (error) {
+            console.error('Login error in controller:', {
+                message: error?.message,
+                email: loginDto.email,
+            });
+            throw error;
+        }
+    }
+    findByEmail(email) {
+        return this.usersService.findByEmail(email);
     }
     findAll() {
         return this.usersService.findAll();
@@ -57,6 +89,13 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "login", null);
+__decorate([
+    (0, common_1.Get)('email/:email'),
+    __param(0, (0, common_1.Param)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findByEmail", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),

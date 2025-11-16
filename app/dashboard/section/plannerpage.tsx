@@ -320,7 +320,7 @@ export default function PlannerPage() {
             <CardContent>
               <p className="text-muted-foreground text-sm">
                 Select destinations from recommendations and we'll calculate the optimal route
-                for you. Google Maps integration coming soon!
+                for you. OpenStreetMap integration is available!
               </p>
               <Button className="mt-4 w-full" disabled>
                 <Route className="mr-2 h-4 w-4" />

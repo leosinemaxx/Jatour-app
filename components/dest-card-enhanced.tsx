@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import GoogleMapView from "@/components/maps/GoogleMapView";
+import OpenStreetMapView from "@/components/maps/OpenStreetMapView";
 import type { Destination } from "@/app/datatypes";
 
 export interface DestCardEnhancedProps {
@@ -210,7 +210,7 @@ const DestCardEnhanced = memo(function DestCardEnhanced({ item, className, onCli
                   exit={{ opacity: 0, height: 0 }}
                   className="rounded-lg overflow-hidden"
                 >
-                  <GoogleMapView
+                  <OpenStreetMapView
                     lat={coordinates.lat}
                     lng={coordinates.lng}
                     name={item.name}

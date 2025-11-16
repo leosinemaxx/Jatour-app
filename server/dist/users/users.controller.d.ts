@@ -24,6 +24,15 @@ export declare class UsersController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    findByEmail(email: string): Promise<{
+        email: string;
+        fullName: string;
+        phone: string;
+        profilePicture: string;
+        id: string;
+        preferences: import("@prisma/client/runtime/library").JsonValue;
+        createdAt: Date;
+    }[]>;
     findAll(): import(".prisma/client").Prisma.PrismaPromise<{
         email: string;
         fullName: string;

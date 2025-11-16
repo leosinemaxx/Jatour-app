@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { UserProfile as User } from "@/app/datatypes";
-import { userAPI } from "@/lib/api";
+import { userAPI } from "@/lib/api-client";
 import { storage } from "@/lib/utils";
 
 interface AuthContextType {
@@ -71,12 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone: string;
   }) => {
     try {
-      // Check if email already exists
-      const existingUser = await userAPI.getByEmail(data.email);
-      if (existingUser) {
-        throw new Error("Email already registered");
-      }
-
+      // Try to create user directly - backend will check for duplicates
+      // This avoids the extra API call to check email
       const newUser = await userAPI.create(data);
       setUser(newUser);
       storage.set(AUTH_STORAGE_KEY, { userId: newUser.id });
@@ -84,7 +80,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Redirect to dashboard after successful signup
       router.push("/dashboard");
     } catch (error: any) {
-      throw new Error(error.message || "Failed to create account");
+      console.error("Signup error:", error);
+      // Extract error message from API response
+      let errorMessage = "Failed to create account";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+        // Handle common error messages
+        if (errorMessage.includes("already registered") || errorMessage.includes("Email already")) {
+          errorMessage = "Email already registered";
+        } else if (errorMessage.includes("validation") || errorMessage.includes("Validation")) {
+          errorMessage = "Please check your input fields";
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 

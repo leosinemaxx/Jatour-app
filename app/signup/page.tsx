@@ -29,8 +29,16 @@ export default function SignUp() {
       setError("Please fill in all required fields!");
       return;
     }
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters!");
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match!");
+      return;
+    }
+    if (!form.fullName || form.fullName.trim() === "") {
+      setError("Full name is required!");
       return;
     }
 
@@ -46,8 +54,10 @@ export default function SignUp() {
       // 🔹 Redirect ke Sign In setelah berhasil daftar
       router.push("/signin");
     } catch (err: any) {
-      console.error(err);
-      setError("Signup failed, please try again!");
+      console.error("Signup error:", err);
+      // Show specific error message if available
+      const errorMessage = err?.message || "Signup failed, please try again!";
+      setError(errorMessage);
     }
   };
 

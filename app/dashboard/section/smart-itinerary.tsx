@@ -22,7 +22,7 @@ import {
   Trash2,
   Navigation
 } from "lucide-react";
-import GoogleMapView from "@/components/maps/GoogleMapView";
+import OpenStreetMapView from "@/components/maps/OpenStreetMapView";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { apiClient } from "@/lib/api-client";
 import { transportationAPI } from "@/lib/transportation-api";
@@ -505,7 +505,7 @@ export default function SmartItinerarySection() {
                               </div>
                               {dest.coordinates && (
                                 <div className="mt-3 rounded-lg overflow-hidden">
-                                  <GoogleMapView
+                                  <OpenStreetMapView
                                     lat={dest.coordinates.lat}
                                     lng={dest.coordinates.lng}
                                     name={dest.name}

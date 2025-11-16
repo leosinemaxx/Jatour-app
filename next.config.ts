@@ -27,10 +27,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   // Performance optimizations
-  swcMinify: true,
   experimental: {
     optimizeCss: true,
   },
+  // Turbopack configuration (Next.js 16 uses Turbopack by default)
+  turbopack: {
+    // Turbopack handles fs fallback automatically for client-side
+  },
+  // Optimize production builds
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

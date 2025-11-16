@@ -32,6 +32,15 @@ export declare class UsersService {
         id: string;
         createdAt: Date;
     }[]>;
+    findByEmail(email: string): Promise<{
+        email: string;
+        fullName: string;
+        phone: string;
+        profilePicture: string;
+        id: string;
+        preferences: import("@prisma/client/runtime/library").JsonValue;
+        createdAt: Date;
+    }[]>;
     findOne(id: string): import(".prisma/client").Prisma.Prisma__UserClient<{
         email: string;
         fullName: string;
