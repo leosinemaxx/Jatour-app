@@ -29,14 +29,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+        <meta name="theme-color" content="#0ea5e9" />
         {/* ✅ Preload images for smoother transitions */}
-        <link rel="preload" as="image" href="/Bali-Pantai.webp" />
-        <link rel="preload" as="image" href="/semeru.webp" />
-        <link rel="preload" as="image" href="/main-bg.webp" />
+        <link rel="preload" as="image" href="/destinations/Bali-Pantai.webp" />
+        <link rel="preload" as="image" href="/destinations/semeru.webp" />
+        <link rel="preload" as="image" href="/destinations/main-bg.webp" />
       </head>
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 overflow-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100`}
       >
         {/* ✅ Global Auth Context Wrapper */}
         <AuthProvider>

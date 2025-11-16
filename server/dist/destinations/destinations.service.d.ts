@@ -1,0 +1,138 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateDestinationDto } from './dto/create-destination.dto';
+import { UpdateDestinationDto } from './dto/update-destination.dto';
+export declare class DestinationsService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    create(createDestinationDto: CreateDestinationDto): import(".prisma/client").Prisma.Prisma__DestinationClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        city: string;
+        province: string;
+        category: string;
+        description: string;
+        image: string;
+        images: string[];
+        rating: number;
+        priceRange: string | null;
+        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        address: string | null;
+        openingHours: string | null;
+        contact: string | null;
+        website: string | null;
+        featured: boolean;
+        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
+        disabledFriendly: boolean;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+    findAll(filters: {
+        city?: string;
+        category?: string;
+        featured?: string;
+        search?: string;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        city: string;
+        province: string;
+        category: string;
+        description: string;
+        image: string;
+        images: string[];
+        rating: number;
+        priceRange: string | null;
+        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        address: string | null;
+        openingHours: string | null;
+        contact: string | null;
+        website: string | null;
+        featured: boolean;
+        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
+        disabledFriendly: boolean;
+    }[]>;
+    findOne(id: string): Promise<{
+        reviews: ({
+            user: {
+                fullName: string;
+                profilePicture: string;
+                id: string;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            rating: number;
+            userId: string;
+            destinationId: string;
+            comment: string | null;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        city: string;
+        province: string;
+        category: string;
+        description: string;
+        image: string;
+        images: string[];
+        rating: number;
+        priceRange: string | null;
+        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        address: string | null;
+        openingHours: string | null;
+        contact: string | null;
+        website: string | null;
+        featured: boolean;
+        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
+        disabledFriendly: boolean;
+    }>;
+    update(id: string, updateDestinationDto: UpdateDestinationDto): import(".prisma/client").Prisma.Prisma__DestinationClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        city: string;
+        province: string;
+        category: string;
+        description: string;
+        image: string;
+        images: string[];
+        rating: number;
+        priceRange: string | null;
+        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        address: string | null;
+        openingHours: string | null;
+        contact: string | null;
+        website: string | null;
+        featured: boolean;
+        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
+        disabledFriendly: boolean;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+    remove(id: string): import(".prisma/client").Prisma.Prisma__DestinationClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        city: string;
+        province: string;
+        category: string;
+        description: string;
+        image: string;
+        images: string[];
+        rating: number;
+        priceRange: string | null;
+        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        address: string | null;
+        openingHours: string | null;
+        contact: string | null;
+        website: string | null;
+        featured: boolean;
+        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
+        disabledFriendly: boolean;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+}

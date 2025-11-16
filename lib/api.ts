@@ -72,13 +72,12 @@ export const userAPI = {
       body: JSON.stringify(userData)
     }),
   
-  // Login
+  // Login - calls the backend API which handles bcrypt password verification
   login: async (email: string, password: string): Promise<User> => {
-    const user = await userAPI.getByEmail(email);
-    if (!user || user.password !== password) {
-      throw new Error("Invalid credentials");
-    }
-    return user;
+    return apiFetch<User>("/users/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
   }
 };
 
