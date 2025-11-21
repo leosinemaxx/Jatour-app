@@ -54,7 +54,7 @@ let BudgetService = class BudgetService {
                 itineraryId: createBudgetDto.itineraryId,
                 totalBudget: createBudgetDto.totalBudget,
                 spent: createBudgetDto.spent || 0,
-                categories: createBudgetDto.categories || {},
+                categories: JSON.stringify(createBudgetDto.categories || {}),
             },
         });
     }

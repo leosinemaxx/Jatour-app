@@ -16,16 +16,15 @@ export declare class ItinerariesService {
                 category: string;
                 description: string;
                 image: string;
-                images: string[];
-                rating: number;
+                images: string | null;
+                rating: number | null;
                 priceRange: string | null;
-                coordinates: import("@prisma/client/runtime/library").JsonValue;
+                coordinates: string;
                 address: string | null;
                 openingHours: string | null;
                 contact: string | null;
                 website: string | null;
                 featured: boolean;
-                accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
                 disabledFriendly: boolean;
             };
         } & {
@@ -46,7 +45,6 @@ export declare class ItinerariesService {
         startDate: Date;
         endDate: Date;
         status: string;
-        thumbnail: string | null;
         notes: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     findAll(userId?: string): import(".prisma/client").Prisma.PrismaPromise<({
@@ -66,16 +64,15 @@ export declare class ItinerariesService {
                 category: string;
                 description: string;
                 image: string;
-                images: string[];
-                rating: number;
+                images: string | null;
+                rating: number | null;
                 priceRange: string | null;
-                coordinates: import("@prisma/client/runtime/library").JsonValue;
+                coordinates: string;
                 address: string | null;
                 openingHours: string | null;
                 contact: string | null;
                 website: string | null;
                 featured: boolean;
-                accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
                 disabledFriendly: boolean;
             };
         } & {
@@ -96,7 +93,6 @@ export declare class ItinerariesService {
         startDate: Date;
         endDate: Date;
         status: string;
-        thumbnail: string | null;
         notes: string | null;
     })[]>;
     findOne(id: string): import(".prisma/client").Prisma.Prisma__ItineraryClient<{
@@ -116,16 +112,15 @@ export declare class ItinerariesService {
                 category: string;
                 description: string;
                 image: string;
-                images: string[];
-                rating: number;
+                images: string | null;
+                rating: number | null;
                 priceRange: string | null;
-                coordinates: import("@prisma/client/runtime/library").JsonValue;
+                coordinates: string;
                 address: string | null;
                 openingHours: string | null;
                 contact: string | null;
                 website: string | null;
                 featured: boolean;
-                accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
                 disabledFriendly: boolean;
             };
         } & {
@@ -140,10 +135,10 @@ export declare class ItinerariesService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            activities: import("@prisma/client/runtime/library").JsonValue;
             itineraryId: string;
             dayNumber: number;
             date: Date;
+            activities: string;
         }[];
         budgetPlan: {
             id: string;
@@ -153,7 +148,7 @@ export declare class ItinerariesService {
             itineraryId: string | null;
             totalBudget: number;
             spent: number;
-            categories: import("@prisma/client/runtime/library").JsonValue;
+            categories: string;
         };
     } & {
         budget: number | null;
@@ -165,7 +160,6 @@ export declare class ItinerariesService {
         startDate: Date;
         endDate: Date;
         status: string;
-        thumbnail: string | null;
         notes: string | null;
     }, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateItineraryDto: UpdateItineraryDto): import(".prisma/client").Prisma.Prisma__ItineraryClient<{
@@ -180,16 +174,15 @@ export declare class ItinerariesService {
                 category: string;
                 description: string;
                 image: string;
-                images: string[];
-                rating: number;
+                images: string | null;
+                rating: number | null;
                 priceRange: string | null;
-                coordinates: import("@prisma/client/runtime/library").JsonValue;
+                coordinates: string;
                 address: string | null;
                 openingHours: string | null;
                 contact: string | null;
                 website: string | null;
                 featured: boolean;
-                accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
                 disabledFriendly: boolean;
             };
         } & {
@@ -210,7 +203,6 @@ export declare class ItinerariesService {
         startDate: Date;
         endDate: Date;
         status: string;
-        thumbnail: string | null;
         notes: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import(".prisma/client").Prisma.Prisma__ItineraryClient<{
@@ -223,7 +215,6 @@ export declare class ItinerariesService {
         startDate: Date;
         endDate: Date;
         status: string;
-        thumbnail: string | null;
         notes: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

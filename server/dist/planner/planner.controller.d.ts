@@ -16,16 +16,15 @@ export declare class PlannerController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        images: string | null;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        coordinates: string;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }[]>;
     calculateRoute(destinationIds: string, startLat?: string, startLng?: string): Promise<{
@@ -38,16 +37,15 @@ export declare class PlannerController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        images: string | null;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        coordinates: string;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }[]>;
 }

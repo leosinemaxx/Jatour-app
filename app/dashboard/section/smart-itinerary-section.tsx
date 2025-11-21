@@ -6,21 +6,21 @@ import { Sparkles, Users, Calendar, Calculator } from "lucide-react";
 
 const steps = [
   {
-    title: "Preferences",
+    title: "Setup your own Holiday!",
     description: "Pick cities, interests, and travel style to inspire the plan.",
     icon: Users,
     href: "/dashboard/homepage/preferences",
     accent: "from-[#7BC8F1] to-[#3B82F6]",
   },
   {
-    title: "Itinerary",
+    title: "Itinerary Builder",
     description: "Review AI-generated agendas styled like your mobile concept.",
     icon: Calendar,
     href: "/dashboard/homepage/itinerary",
     accent: "from-[#FBC2EB] to-[#A18CD1]",
   },
   {
-    title: "Budget",
+    title: "Smart Budget Engine",
     description: "Adjust totals, payment methods, and compare spending.",
     icon: Calculator,
     href: "/dashboard/homepage/budget",

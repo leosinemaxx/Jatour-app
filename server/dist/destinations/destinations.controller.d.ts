@@ -14,19 +14,20 @@ export declare class DestinationsController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        images: string | null;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        coordinates: string;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     findAll(city?: string, category?: string, featured?: string, search?: string): Promise<{
+        coordinates: any;
+        images: any;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -36,19 +37,19 @@ export declare class DestinationsController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }[]>;
     findOne(id: string): Promise<{
+        coordinates: any;
+        images: any;
+        rating: number;
         reviews: ({
             user: {
                 fullName: string;
@@ -64,7 +65,6 @@ export declare class DestinationsController {
             destinationId: string;
             comment: string | null;
         })[];
-    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -74,16 +74,12 @@ export declare class DestinationsController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }>;
     update(id: string, updateDestinationDto: UpdateDestinationDto): import(".prisma/client").Prisma.Prisma__DestinationClient<{
@@ -96,16 +92,15 @@ export declare class DestinationsController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        images: string | null;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        coordinates: string;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import(".prisma/client").Prisma.Prisma__DestinationClient<{
@@ -118,16 +113,15 @@ export declare class DestinationsController {
         category: string;
         description: string;
         image: string;
-        images: string[];
-        rating: number;
+        images: string | null;
+        rating: number | null;
         priceRange: string | null;
-        coordinates: import("@prisma/client/runtime/library").JsonValue;
+        coordinates: string;
         address: string | null;
         openingHours: string | null;
         contact: string | null;
         website: string | null;
         featured: boolean;
-        accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
         disabledFriendly: boolean;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

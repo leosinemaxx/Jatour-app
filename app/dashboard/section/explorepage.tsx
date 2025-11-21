@@ -88,6 +88,7 @@ export default function ExploreSection() {
     });
   }, [destinations, search, selectedCategory, showAccessibleOnly]);
 
+  const allDestinations = useMemo(() => filtered, [filtered]);
   const featuredDestinations = useMemo(() => filtered.filter(d => d.featured), [filtered]);
 
   const accessibilityLabels: Record<keyof NonNullable<Destination["accessibilityFeatures"]>, string> = {
@@ -412,6 +413,32 @@ export default function ExploreSection() {
           <h2 className="text-xl font-bold text-gray-900">Featured Destinations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {featuredDestinations.map((dest) => (
+              <FeaturedDestinationCard key={dest.id} destination={dest} />
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* All Destinations - Show when there are destinations that aren't featured or when no featured filter is active */}
+      {(allDestinations.length > featuredDestinations.length || featuredDestinations.length === 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">
+              {featuredDestinations.length > 0 ? "More Destinations" : "All Destinations"}
+            </h2>
+            <Badge variant="outline" className="text-xs">
+              {allDestinations.length} destinations
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {allDestinations
+              .filter(dest => !dest.featured)
+              .map((dest) => (
               <FeaturedDestinationCard key={dest.id} destination={dest} />
             ))}
           </div>

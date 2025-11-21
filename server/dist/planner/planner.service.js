@@ -71,7 +71,9 @@ let PlannerService = class PlannerService {
         route.push(current);
         unvisited.splice(unvisited.indexOf(current), 1);
         while (unvisited.length > 0) {
-            const currentCoords = current.coordinates;
+            const currentCoords = typeof current.coordinates === 'string'
+                ? JSON.parse(current.coordinates)
+                : current.coordinates;
             const nearest = this.findNearestDestination(currentCoords, unvisited);
             route.push(nearest);
             unvisited.splice(unvisited.indexOf(nearest), 1);

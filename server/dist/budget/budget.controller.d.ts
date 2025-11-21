@@ -21,7 +21,7 @@ export declare class BudgetController {
             itineraryId: string | null;
             totalBudget: number;
             spent: number;
-            categories: import("@prisma/client/runtime/library").JsonValue;
+            categories: string;
         };
         days: number;
     }>;
@@ -33,7 +33,7 @@ export declare class BudgetController {
         itineraryId: string | null;
         totalBudget: number;
         spent: number;
-        categories: import("@prisma/client/runtime/library").JsonValue;
+        categories: string;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     findAll(userId: string): import(".prisma/client").Prisma.PrismaPromise<({
         itinerary: {
@@ -48,16 +48,15 @@ export declare class BudgetController {
                     category: string;
                     description: string;
                     image: string;
-                    images: string[];
-                    rating: number;
+                    images: string | null;
+                    rating: number | null;
                     priceRange: string | null;
-                    coordinates: import("@prisma/client/runtime/library").JsonValue;
+                    coordinates: string;
                     address: string | null;
                     openingHours: string | null;
                     contact: string | null;
                     website: string | null;
                     featured: boolean;
-                    accessibilityFeatures: import("@prisma/client/runtime/library").JsonValue | null;
                     disabledFriendly: boolean;
                 };
             } & {
@@ -78,7 +77,6 @@ export declare class BudgetController {
             startDate: Date;
             endDate: Date;
             status: string;
-            thumbnail: string | null;
             notes: string | null;
         };
     } & {
@@ -89,7 +87,7 @@ export declare class BudgetController {
         itineraryId: string | null;
         totalBudget: number;
         spent: number;
-        categories: import("@prisma/client/runtime/library").JsonValue;
+        categories: string;
     })[]>;
     findOne(id: string): import(".prisma/client").Prisma.Prisma__BudgetClient<{
         itinerary: {
@@ -102,7 +100,6 @@ export declare class BudgetController {
             startDate: Date;
             endDate: Date;
             status: string;
-            thumbnail: string | null;
             notes: string | null;
         };
     } & {
@@ -113,7 +110,7 @@ export declare class BudgetController {
         itineraryId: string | null;
         totalBudget: number;
         spent: number;
-        categories: import("@prisma/client/runtime/library").JsonValue;
+        categories: string;
     }, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateBudgetDto: UpdateBudgetDto): import(".prisma/client").Prisma.Prisma__BudgetClient<{
         id: string;
@@ -123,7 +120,7 @@ export declare class BudgetController {
         itineraryId: string | null;
         totalBudget: number;
         spent: number;
-        categories: import("@prisma/client/runtime/library").JsonValue;
+        categories: string;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
     remove(id: string): import(".prisma/client").Prisma.Prisma__BudgetClient<{
         id: string;
@@ -133,6 +130,6 @@ export declare class BudgetController {
         itineraryId: string | null;
         totalBudget: number;
         spent: number;
-        categories: import("@prisma/client/runtime/library").JsonValue;
+        categories: string;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }

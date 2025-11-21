@@ -11,7 +11,7 @@ export declare class UsersService {
         phone: string;
         profilePicture: string;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue;
+        preferences: string;
         createdAt: Date;
     }>;
     login(loginDto: LoginDto): Promise<{
@@ -20,7 +20,7 @@ export declare class UsersService {
         phone: string | null;
         profilePicture: string | null;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue | null;
+        preferences: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -38,7 +38,7 @@ export declare class UsersService {
         phone: string;
         profilePicture: string;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue;
+        preferences: string;
         createdAt: Date;
     }[]>;
     findOne(id: string): import(".prisma/client").Prisma.Prisma__UserClient<{
@@ -47,7 +47,7 @@ export declare class UsersService {
         phone: string;
         profilePicture: string;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue;
+        preferences: string;
         createdAt: Date;
     }, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: string, updateUserDto: UpdateUserDto): Promise<{
@@ -56,7 +56,7 @@ export declare class UsersService {
         phone: string;
         profilePicture: string;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue;
+        preferences: string;
         updatedAt: Date;
     }>;
     remove(id: string): import(".prisma/client").Prisma.Prisma__UserClient<{
@@ -66,7 +66,7 @@ export declare class UsersService {
         phone: string | null;
         profilePicture: string | null;
         id: string;
-        preferences: import("@prisma/client/runtime/library").JsonValue | null;
+        preferences: string | null;
         createdAt: Date;
         updatedAt: Date;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;

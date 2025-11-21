@@ -49,7 +49,7 @@ export class UsersService {
           fullName: createUserDto.fullName,
           phone: createUserDto.phone || null,
           profilePicture: createUserDto.profilePicture || '/avatars/default.jpg',
-          preferences: preferences,
+          preferences: JSON.stringify(preferences),
         },
         select: {
           id: true,
@@ -210,4 +210,3 @@ export class UsersService {
     });
   }
 }
-

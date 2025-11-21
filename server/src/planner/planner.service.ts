@@ -86,7 +86,9 @@ export class PlannerService {
 
     // Greedy algorithm: always go to nearest unvisited destination
     while (unvisited.length > 0) {
-      const currentCoords = current.coordinates as { lat: number; lng: number };
+      const currentCoords = typeof current.coordinates === 'string' 
+        ? JSON.parse(current.coordinates) as { lat: number; lng: number }
+        : current.coordinates as { lat: number; lng: number };
       const nearest = this.findNearestDestination(currentCoords, unvisited);
       route.push(nearest);
       unvisited.splice(unvisited.indexOf(nearest), 1);
@@ -159,4 +161,3 @@ export class PlannerService {
     return 0; // Budget is too low
   }
 }
-

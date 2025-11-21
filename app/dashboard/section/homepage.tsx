@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { 
   MapPin, 
   Bell, 
@@ -28,6 +29,7 @@ import Image from "next/image";
 import type { Destination } from "@/app/datatypes";
 
 export default function HomeSection() {
+  const router = useRouter();
   const { destinations, isLoading: loading, refresh } = useDestinations({ featured: true });
   const [weather, setWeather] = useState({ temp: 22, condition: "Cerah Berawan" });
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -37,6 +39,27 @@ export default function HomeSection() {
     setIsRefreshing(true);
     await refresh();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleFeatureClick = (feature: string) => {
+    switch (feature) {
+      case "Smart Planner":
+        // Navigate to existing SmartItinerarySection via tab
+        router.push("/dashboard?tab=smart");
+        break;
+      case "Promo and Idea":
+        // Navigate to promo page using page parameter
+        router.push("/dashboard?page=promo");
+        break;
+      case "Kuliner":
+        // Navigate to kuliner page using page parameter
+        router.push("/dashboard?page=kuliner");
+        break;
+      case "Pusat Pelayanan":
+        // Navigate to customer service page using page parameter
+        router.push("/dashboard?page=customer-service");
+        break;
+    }
   };
 
   const displayDestinations = useMemo(() => destinations.slice(0, 3), [destinations]);
@@ -126,29 +149,29 @@ export default function HomeSection() {
         </motion.div>
       </div>
 
-      {/* Feature Categories */}
+      {/* Feature Categories - Now Clickable */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
-          { icon: Calendar, label: "Smart Planner", color: "from-blue-500 to-cyan-500" },
-          { icon: Tag, label: "Promo and Idea", color: "from-orange-500 to-red-500" },
-          { icon: UtensilsCrossed, label: "Kuliner", color: "from-green-500 to-emerald-500" },
-          { icon: Building2, label: "Pusat Pelayanan", color: "from-purple-500 to-pink-500" },
+          { icon: Calendar, label: "Smart Planner", color: "from-blue-500 to-cyan-500", tab: "smart" },
+          { icon: Tag, label: "Promo and Idea", color: "from-orange-500 to-red-500", tab: "promo" },
+          { icon: UtensilsCrossed, label: "Kuliner", color: "from-green-500 to-emerald-500", tab: "kuliner" },
+          { icon: Building2, label: "Pusat Pelayanan", color: "from-purple-500 to-pink-500", tab: "customer-service" },
         ].map((feature, index) => (
-          <motion.div
+          <motion.button
             key={feature.label}
             initial={{ opacity: 0, scale: 0.8 }}
-            ini
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 * index }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="text-center"
+            onClick={() => handleFeatureClick(feature.label)}
+            className="text-center bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all border border-gray-100"
           >
             <div className={`bg-gradient-to-br ${feature.color} rounded-2xl p-4 mb-2 shadow-md`}>
               <feature.icon className="h-6 w-6 mx-auto text-white" />
             </div>
             <p className="text-xs text-gray-700 font-medium">{feature.label}</p>
-          </motion.div>
+          </motion.button>
         ))}
       </div>
 

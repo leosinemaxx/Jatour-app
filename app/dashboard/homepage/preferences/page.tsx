@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useSmartItinerary } from "@/lib/contexts/SmartItineraryContext";
 import { cn, capitalize } from "@/lib/utils";
+import { useDestinations } from "@/lib/hooks/useDestinations";
+import { LoadingSpinner, LoadingSkeleton } from "@/components/ui/loading";
 
 type StageKey = "themes" | "cities" | "spots" | "logistics";
 
@@ -50,34 +52,6 @@ const themeOptions: ThemeOption[] = [
   { id: "nightlife", title: "Nightlife", description: "Bar & city lights", accent: "from-slate-900 to-slate-700 text-white", icon: MoonStar },
 ];
 
-const cityCards = [
-  { name: "Surabaya", image: "/destinations/surabaya.webp", tags: ["urban", "culinary", "heritage", "nightlife"] },
-  { name: "Malang", image: "/destinations/malang.webp", tags: ["nature", "culture", "family"] },
-  { name: "Banyuwangi", image: "/destinations/banyuwangi.webp", tags: ["nature", "beach", "eco"] },
-  { name: "Probolinggo", image: "/destinations/probolinggo.webp", tags: ["mountain", "adventure"] },
-  { name: "Batu", image: "/destinations/batu.webp", tags: ["family", "nature", "adventure"] },
-  { name: "Madura", image: "/destinations/madura.webp", tags: ["culture", "heritage", "culinary"] },
-  { name: "Lumajang", image: "/destinations/lumajang.webp", tags: ["nature", "mountain", "adventure"] },
-  { name: "Pacitan", image: "/destinations/pacitan.webp", tags: ["beach", "adventure"] },
-  { name: "Jember", image: "/destinations/main-bg.webp", tags: ["culture", "beach", "culinary"] },
-  { name: "Blitar", image: "/destinations/main-bg.webp", tags: ["heritage", "culture"] },
-  { name: "Kediri", image: "/destinations/main-bg.webp", tags: ["culture", "urban", "culinary"] },
-  { name: "Pasuruan", image: "/destinations/main-bg.webp", tags: ["eco", "nature", "family"] },
-];
-
-const spotCards = [
-  { name: "Bukit Bentar", image: "/destinations/bukit-bentar.webp", tags: ["sunrise", "nature", "mountain"] },
-  { name: "Kawah Ijen", image: "/destinations/kawahijen.webp", tags: ["adventure", "nature", "nightlight"] },
-  { name: "Pantai Pasir Putih", image: "/destinations/pasir-putih.webp", tags: ["beach", "family"] },
-  { name: "Candi Singosari", image: "/destinations/candi-singosari.webp", tags: ["heritage", "culture"] },
-  { name: "Taman Nasional Bromo", image: "/destinations/bromo.webp", tags: ["mountain", "adventure", "nature"] },
-  { name: "Kampung Warna-Warni Jodipan", image: "/destinations/main-bg.webp", tags: ["urban", "culture", "family"] },
-  { name: "Baluran Savanna", image: "/destinations/main-bg.webp", tags: ["eco", "nature", "wildlife"] },
-  { name: "Pantai Plengkung (G-Land)", image: "/destinations/main-bg.webp", tags: ["beach", "adventure"] },
-  { name: "Museum House of Sampoerna", image: "/destinations/main-bg.webp", tags: ["heritage", "urban"] },
-  { name: "Taman Safari Prigen", image: "/destinations/main-bg.webp", tags: ["family", "eco"] },
-];
-
 const stageConfigs: { key: StageKey; title: string; subtitle: string }[] = [
   { key: "themes", title: "Jenis Wisata Favorit", subtitle: "Pilih gaya liburan yang paling kamu sukai" },
   { key: "cities", title: "Kota Impian", subtitle: "Tentukan kota yang ingin kamu jelajahi" },
@@ -87,6 +61,7 @@ const stageConfigs: { key: StageKey; title: string; subtitle: string }[] = [
 
 export default function PreferencesPage() {
   const router = useRouter();
+  const { destinations, isLoading: loadingDestinations } = useDestinations();
   const {
     preferences,
     updatePreferences,
@@ -105,12 +80,83 @@ export default function PreferencesPage() {
   const [stageError, setStageError] = useState<string | null>(null);
   const logisticsComplete = Boolean(preferences.startDate && preferences.days > 0 && preferences.travelers > 0);
 
+  // Generate city cards from real destinations data
+  const cityCards = useMemo(() => {
+    if (!destinations.length) return [];
+    
+    const citiesMap = new Map();
+    destinations.forEach(dest => {
+      const cityName = dest.city;
+      if (!citiesMap.has(cityName)) {
+        const category = dest.category?.toLowerCase() || '';
+        const tags = [];
+        
+        // Map categories to themes
+        if (['mountain', 'national park', 'forest'].includes(category)) {
+          tags.push('nature', 'mountain', 'adventure');
+        } else if (['beach'].includes(category)) {
+          tags.push('beach', 'nature', 'family');
+        } else if (['temple', 'religious'].includes(category)) {
+          tags.push('culture', 'heritage', 'culture');
+        } else if (['city'].includes(category)) {
+          tags.push('urban', 'culinary', 'nightlife');
+        } else if (['theme park', 'zoo', 'museum'].includes(category)) {
+          tags.push('family', 'culture', 'heritage');
+        } else if (['waterfall', 'lake'].includes(category)) {
+          tags.push('nature', 'family', 'wellness');
+        }
+        
+        citiesMap.set(cityName, {
+          name: cityName,
+          image: dest.image || "/destinations/main-bg.webp",
+          tags,
+          province: dest.province
+        });
+      }
+    });
+    
+    return Array.from(citiesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [destinations]);
+
+  // Generate spot cards from real destinations data
+  const spotCards = useMemo(() => {
+    if (!destinations.length) return [];
+    
+    return destinations.map(dest => {
+      const category = dest.category?.toLowerCase() || '';
+      const tags = [];
+      
+      // Map categories to themes
+      if (['mountain', 'national park', 'forest'].includes(category)) {
+        tags.push('nature', 'mountain', 'adventure');
+      } else if (['beach'].includes(category)) {
+        tags.push('beach', 'nature', 'family');
+      } else if (['temple', 'religious'].includes(category)) {
+        tags.push('culture', 'heritage', 'culture');
+      } else if (['city'].includes(category)) {
+        tags.push('urban', 'culinary', 'nightlife');
+      } else if (['theme park', 'zoo', 'museum'].includes(category)) {
+        tags.push('family', 'culture', 'heritage');
+      } else if (['waterfall', 'lake'].includes(category)) {
+        tags.push('nature', 'family', 'wellness');
+      }
+      
+      return {
+        name: dest.name,
+        image: dest.image || "/destinations/main-bg.webp",
+        tags,
+        category: dest.category,
+        city: dest.city
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [destinations]);
+
   const filteredCities = useMemo(
     () =>
       cityCards.filter((card) =>
         card.name.toLowerCase().includes(cityQuery.toLowerCase())
       ),
-    [cityQuery]
+    [cityCards, cityQuery]
   );
 
   const filteredSpots = useMemo(
@@ -118,7 +164,7 @@ export default function PreferencesPage() {
       spotCards.filter((card) =>
         card.name.toLowerCase().includes(spotQuery.toLowerCase())
       ),
-    [spotQuery]
+    [spotCards, spotQuery]
   );
 
   const stageCompletion: Record<StageKey, boolean> = {
@@ -184,6 +230,23 @@ export default function PreferencesPage() {
   };
 
   const currentStageKey = stageConfigs[currentStage].key;
+
+  if (loadingDestinations) {
+    return (
+      <div className="space-y-8 pb-16">
+        <div className="space-y-4">
+          <LoadingSkeleton className="h-8 w-64" />
+          <LoadingSkeleton className="h-6 w-96" />
+          <LoadingSkeleton className="h-4 w-80" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <LoadingSkeleton key={i} className="h-32 w-full rounded-3xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16">
@@ -557,5 +620,3 @@ function SummaryBox({ label, values, onEdit }: { label: string; values: string[]
     </div>
   );
 }
-
-

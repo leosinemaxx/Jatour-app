@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -17,7 +17,7 @@ model User {
   fullName      String
   phone         String?
   profilePicture String?
-  preferences   Json?     // { language, notifications, theme }
+  preferences   String?   // JSON: { language, notifications, theme }
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -26,16 +26,11 @@ model User {
   reviews       Review[]
   favorites     Favorite[]
   photoGalleries PhotoGallery[]
-  travelStories TravelStory[]
-  accommodationReviews AccommodationReview[]
-  activityReviews ActivityReview[]
-  forumTopics    ForumTopic[]
-  forumReplies   ForumReply[]
-  storyComments  Storycomment[]
+  forumTopics   ForumTopic[]
+  forumReplies  ForumReply[]
   sentMessages   Message[] @relation("MessageSender")
   receivedMessages Message[] @relation("MessageReceiver")
-  companionMatch CompanionMatch?
-  notifications  Notification[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -46,18 +41,17 @@ model Destination {
   city          String
   province      String    @default("Jawa Timur")
   category      String    // Beach, Mountain, Temple, etc.
-  description   String    @db.Text
+  description   String
   image         String
-  images        String[]  @default([])
-  rating        Float      @default(0)
+  images        String?   // JSON string: JSON.stringify(["img1.jpg", "img2.jpg"])
+  rating        Float?    // 1-5 stars
   priceRange    String?   // budget, moderate, luxury
-  coordinates   Json      // { lat, lng }
+  coordinates   String    // JSON: JSON.stringify({ lat, lng })
   address       String?
   openingHours  String?
   contact       String?
   website       String?
   featured      Boolean   @default(false)
-  accessibilityFeatures Json? // { wheelchairAccessible, accessibleParking, accessibleRestrooms, audioGuide, signLanguage, etc. }
   disabledFriendly Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -65,17 +59,13 @@ model Destination {
   itineraries   ItineraryDestination[]
   reviews       Review[]
   favorites     Favorite[]
-  accommodations Accommodation[]
-  activities    Activity[]
-  photoGalleries PhotoGallery[]
-  weatherData   WeatherData[]
-  emergencyContacts EmergencyContact[]
-  safetyAlerts   SafetyAlert[]
 
   @@index([city])
   @@index([category])
   @@index([featured])
   @@index([disabledFriendly])
+  @@index([rating])
+  @@index([priceRange])
   @@map("destinations")
 }
 
@@ -87,8 +77,7 @@ model Itinerary {
   endDate       DateTime
   budget        Float?
   status        String    @default("draft") // draft, planned, ongoing, completed, cancelled
-  thumbnail     String?
-  notes         String?   @db.Text
+  notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -96,10 +85,6 @@ model Itinerary {
   destinations  ItineraryDestination[]
   days          ItineraryDay[]
   budgetPlan    Budget?
-  transportation ItineraryTransportation[]
-  accommodations ItineraryAccommodation[]
-  activities    ItineraryActivity[]
-  photoGalleries PhotoGallery[]
 
   @@index([userId])
   @@index([status])
@@ -112,7 +97,7 @@ model ItineraryDestination {
   destinationId String
   order         Int       @default(0)
   visitDate     DateTime?
-  notes         String?   @db.Text
+  notes         String?
 
   itinerary     Itinerary   @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
@@ -127,11 +112,12 @@ model ItineraryDay {
   itineraryId   String
   dayNumber     Int
   date          DateTime
-  activities    Json      // Array of activities
+  activities    String    // JSON array of activities
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   itinerary     Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  blocks        ItineraryBlock[]
 
   @@unique([itineraryId, dayNumber])
   @@index([itineraryId])
@@ -144,7 +130,7 @@ model Budget {
   itineraryId   String?   @unique
   totalBudget   Float
   spent         Float     @default(0)
-  categories    Json      // { accommodation, food, transport, activities, etc. }
+  categories    String    // JSON: { accommodation, food, transport, activities, etc. }
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -160,7 +146,7 @@ model Review {
   userId        String
   destinationId String
   rating        Int       // 1-5
-  comment       String?   @db.Text
+  comment       String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -186,327 +172,17 @@ model Favorite {
   @@map("favorites")
 }
 
-// Phase 1: Core Infrastructure - Transportation System
-model Transportation {
-  id            String   @id @default(cuid())
-  type          String   // flight, train, bus, car_rental, taxi
-  provider      String   // Garuda Indonesia, Kereta Api, etc.
-  route         String   // origin-destination
-  schedule      Json     // { departureTime, arrivalTime, duration, frequency }
-  pricing       Json     // { economy, business, firstClassRates }
-  availability  Json     // { seatsAvailable, bookedSeats }
-  bookingUrl    String?
-  status        String   @default("active") // active, cancelled, delayed
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  itineraries   ItineraryTransportation[]
-
-  @@index([type])
-  @@index([route])
-  @@map("transportations")
-}
-
-model ItineraryTransportation {
-  id              String       @id @default(cuid())
-  itineraryId     String
-  transportationId String
-  bookingRef      String?
-  cost           Float
-  notes          String?     @db.Text
-  bookingStatus  String     @default("pending") // pending, confirmed, cancelled
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  itinerary       Itinerary       @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-  transportation  Transportation  @relation(fields: [transportationId], references: [id])
-
-  @@unique([itineraryId, transportationId])
-  @@index([itineraryId])
-  @@map("itinerary_transportation")
-}
-
-// Phase 1: Accommodation System
-model Accommodation {
-  id            String    @id @default(cuid())
-  name          String
-  type          String    // hotel, hostel, homestay, resort, apartment
-  location      String    // destination city/area
-  destinationId String
-  starRating    Int?      // 1-5 stars
-  pricing       Json      // { single: {perNight: 100}, double: {perNight: 150}, etc. }
-  amenities     String[]  // wifi, pool, gym, restaurant, parking, etc.
-  policies      Json      // { checkInTime, checkOutTime, cancellationPolicy, petPolicy }
-  images        String[]
-  contact       String?
-  bookingUrl    String?
-  rating        Float     @default(0)
-  reviewCount   Int       @default(0)
-  available     Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  destination   Destination @relation(fields: [destinationId], references: [id])
-  itineraries   ItineraryAccommodation[]
-  reviews       AccommodationReview[]
-
-  @@index([location])
-  @@index([type])
-  @@index([available])
-  @@map("accommodations")
-}
-
-model ItineraryAccommodation {
-  id               String         @id @default(cuid())
-  itineraryId      String
-  accommodationId  String
-  checkInDate      DateTime
-  checkOutDate     DateTime
-  roomType         String?        // single, double, suite, etc.
-  numberOfRooms    Int           @default(1)
-  numberOfGuests   Int           @default(2)
-  cost             Float
-  bookingRef       String?
-  bookingStatus    String        @default("pending") // pending, confirmed, cancelled, checked_in, checked_out
-  specialRequests  String?       @db.Text
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-
-  itinerary        Itinerary        @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-  accommodation    Accommodation   @relation(fields: [accommodationId], references: [id])
-
-  @@unique([itineraryId, accommodationId, checkInDate])
-  @@index([itineraryId])
-  @@map("itinerary_accommodations")
-}
-
-model AccommodationReview {
-  id             String      @id @default(cuid())
-  userId         String
-  accommodationId String
-  rating         Int         // 1-5
-  comment        String?     @db.Text
-  images         String[]    // user uploaded photos
-  cleanliness    Int?        // 1-5 rating for specific aspect
-  comfort        Int?        // 1-5 rating for specific aspect
-  location       Int?        // 1-5 rating for specific aspect
-  service        Int?        // 1-5 rating for specific aspect
-  value          Int?        // 1-5 rating for value
-  wouldRecommend Boolean     @default(true)
-  verified       Boolean     @default(false) // if actually stayed there
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accommodation   Accommodation   @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, accommodationId])
-  @@index([accommodationId])
-  @@map("accommodation_reviews")
-}
-
-// Phase 1: Activity & Experience System
-model Activity {
-  id            String    @id @default(cuid())
-  name          String
-  description   String    @db.Text
-  category      String    // adventure, cultural, food, nature, wellness, shopping, etc.
-  destinationId String
-  duration      String    // "2 hours", "half day", "full day", "multi-day"
-  difficulty    String    // easy, moderate, challenging, expert
-  minAge        Int?      // minimum age requirement
-  maxGroupSize  Int?      // maximum participants per booking
-  pricing       Json      // { adult: 50, child: 25, senior: 40, etc. }
-  includes      String[]  // what's included: guide, equipment, transport, food, etc.
-  excludes      String[]  // what's not included
-  requirements  String[]  // swimming skills, medical conditions, fitness level, etc.
-  bestTime      String?   // best season/time of year to do this activity
-  images        String[]
-  bookingUrl    String?
-  rating        Float     @default(0)
-  reviewCount   Int       @default(0)
-  available     Boolean   @default(true)
-  featured      Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  destination   Destination @relation(fields: [destinationId], references: [id])
-  itineraries   ItineraryActivity[]
-  reviews       ActivityReview[]
-
-  @@index([category])
-  @@index([destinationId])
-  @@index([difficulty])
-  @@index([featured])
-  @@index([available])
-  @@map("activities")
-}
-
-model ItineraryActivity {
-  id         String      @id @default(cuid())
-  itineraryId String
-  activityId  String
-  date       DateTime
-  startTime  String?     // optional specific time
-  duration   String?     // confirm duration
-  cost       Float
-  bookingRef String?
-  notes      String?     @db.Text
-  status     String      @default("planned") // planned, booked, completed, cancelled
-  participants Int       @default(1) // number of people for this activity
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  itinerary  Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-  activity   Activity  @relation(fields: [activityId], references: [id])
-
-  @@unique([itineraryId, activityId, date])
-  @@index([itineraryId])
-  @@map("itinerary_activities")
-}
-
-model ActivityReview {
-  id         String   @id @default(cuid())
-  userId     String
-  activityId String
-  rating     Int      // 1-5
-  comment    String?  @db.Text
-  images     String[] // user uploaded photos
-  experience Json?    // { guideQuality, organization, enjoyment, difficultyMatched }
-  verified   Boolean  @default(false) // if actually participated
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, activityId])
-  @@index([activityId])
-  @@map("activity_reviews")
-}
-
-// Phase 2: Enhanced User Experience - Photo Gallery System
-model PhotoGallery {
-  id            String   @id @default(cuid())
-  userId        String
-  title         String?
-  description   String?  @db.Text
-  images        String[]
-  isPublic      Boolean  @default(false)
-  tags          String[]
-  location      Json?    // { lat, lng, address, destinationId }
-  destinationId String?
-  itineraryId   String?
-  activityId    String?
-  sharedWith    String[] @default([]) // user IDs who can view private gallery
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  destination   Destination? @relation(fields: [destinationId], references: [id])
-  itinerary     Itinerary?   @relation(fields: [itineraryId], references: [id])
-
-  @@index([userId])
-  @@index([isPublic])
-  @@index([destinationId])
-  @@map("photo_galleries")
-}
-
-// Phase 2: Weather Integration
-model WeatherData {
-  id            String   @id @default(cuid())
-  destinationId String
-  date          DateTime
-  temperature   Json     // { min: 25, max: 35, avg: 30, feelsLike: 32 }
-  condition     String   // sunny, cloudy, rainy, thunderstorm, etc.
-  humidity      Int?     // percentage
-  windSpeed     Float?   // km/h
-  windDirection String?  // North, South, East, West, etc.
-  precipitation Float?   // mm, probability of rain
-  uvIndex       Int?     // 1-11 UV index
-  sunrise       String?  // HH:MM format
-  sunset        String?  // HH:MM format
-  airQuality    Json?    // { aqi: 45, pm25: 25, pm10: 40, etc. }
-  alerts        String[] @default([]) // weather alerts/warnings
-  createdAt     DateTime @default(now())
-
-  destination   Destination @relation(fields: [destinationId], references: [id])
-
-  @@unique([destinationId, date])
-  @@index([destinationId])
-  @@map("weather_data")
-}
-
-// Phase 2: Emergency & Safety Features
-model EmergencyContact {
-  id            String   @id @default(cuid())
-  name          String
-  type          String   // embassy, consulate, hospital, clinic, police, tourist_police, fire_station, pharmacy, embassy
-  country       String
-  city          String
-  address       String
-  coordinates   Json     // { lat, lng }
-  phone         String
-  phoneAlt      String?  // alternative phone number
-  email         String?
-  website       String?
-  languages     String[] @default([]) // spoken languages
-  services      String[] @default([]) // services provided
-  is24Hour      Boolean  @default(false)
-  isEnglish     Boolean  @default(true)
-  destinationId String?
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  destination   Destination? @relation(fields: [destinationId], references: [id])
-
-  @@index([type])
-  @@index([country])
-  @@index([city])
-  @@index([destinationId])
-  @@map("emergency_contacts")
-}
-
-model SafetyAlert {
-  id             String   @id @default(cuid())
-  title          String
-  description    String   @db.Text
-  category       String   // weather, security, health, natural-disaster, political, travel-advisory
-  severity       String   // low, medium, high, critical
-  affectedAreas  String[] // cities, regions affected
-  destinationId  String?
-  startDate      DateTime?
-  endDate        DateTime?
-  source         String   // WHO, local_government, embassy, etc.
-  advice         String?  @db.Text // what travelers should do
-  contactInfo    Json?    // emergency contacts
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  destination    Destination? @relation(fields: [destinationId], references: [id])
-
-  @@index([category])
-  @@index([severity])
-  @@index([isActive])
-  @@map("safety_alerts")
-}
-
-// Phase 3: Community Features - Forum System
+// Forum System
 model ForumCategory {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?   @db.Text
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String
   icon        String?
-  color       String?   // hex color code
-  isActive    Boolean   @default(true)
-  order       Int       @default(0)
-  threadCount Int       @default(0)
-  postCount   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  color       String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
   topics      ForumTopic[]
 
@@ -514,115 +190,95 @@ model ForumCategory {
 }
 
 model ForumTopic {
-  id            String         @id @default(cuid())
+  id            String       @id @default(cuid())
   title         String
-  slug          String         @unique
-  content       String         @db.Text
+  slug          String       @unique
+  content       String
   userId        String
   categoryId    String
-  isPinned      Boolean        @default(false)
-  isLocked      Boolean        @default(false)
-  isSticky      Boolean        @default(false)
-  views         Int            @default(0)
-  replyCount    Int            @default(0)
-  lastActivity  DateTime       @default(now())
-  lastReplyId   String?
-  tags          String[]       @default([])
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  tags          String?      // JSON string: JSON.stringify(["tag1", "tag2"])
+  isPinned      Boolean      @default(false)
+  isLocked      Boolean      @default(false)
+  views         Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category      ForumCategory  @relation(fields: [categoryId], references: [id])
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      ForumCategory @relation(fields: [categoryId], references: [id])
   replies       ForumReply[]
 
   @@index([userId])
   @@index([categoryId])
   @@index([isPinned])
-  @@index([createdAt])
   @@map("forum_topics")
 }
 
 model ForumReply {
   id        String     @id @default(cuid())
-  content   String     @db.Text
+  content   String
   userId    String
   topicId   String
-  parentId  String?    // for nested replies
-  isBest    Boolean    @default(false) // marked as best answer by topic author
-  likes     Int        @default(0)
-  dislikes  Int        @default(0)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic     ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  parent    ForumReply? @relation("ReplyToReply", fields: [parentId], references: [id])
-  children  ForumReply[] @relation("ReplyToReply")
 
   @@index([userId])
   @@index([topicId])
-  @@index([parentId])
   @@map("forum_replies")
 }
 
-// Phase 3: Travel Stories & Blog Features
-model TravelStory {
-  id            String      @id @default(cuid())
-  slug          String      @unique
-  title         String
-  subtitle      String?
-  content       String      @db.Text
-  excerpt       String?     @db.Text
-  authorId      String
-  coverImage    String?
-  images        String[]
-  tags          String[]
-  destinations  String[]    @default([]) // destination IDs covered
-  category      String      // adventure, culture, food, budget-travel, luxury, family, solo
-  status        String      @default("draft") // draft, published, archived
-  featured      Boolean     @default(false)
-  views         Int         @default(0)
-  likes         Int         @default(0)
-  readTime      Int?        // in minutes, calculated from content
-  publishedAt   DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+model PhotoGallery {
+  id            String        @id @default(cuid())
+  userId        String
+  title         String?
+  images        String        // JSON array: ["img1.jpg", "img2.jpg"]
+  isPublic      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  author        User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments      Storycomment[]
-
-  @@index([authorId])
-  @@index([status])
-  @@index([featured])
-  @@index([category])
-  @@index([publishedAt])
-  @@map("travel_stories")
-}
-
-model Storycomment {
-  id        String        @id @default(cuid())
-  content   String        @db.Text
-  userId    String
-  storyId   String
-  parentId  String?       // for nested comments
-  likes     Int           @default(0)
-  dislikes  Int           @default(0)
-  isEdited  Boolean       @default(false)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  story     TravelStory    @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  parent    Storycomment?  @relation("CommentToComment", fields: [parentId], references: [id])
-  children  Storycomment[] @relation("CommentToComment")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([storyId])
-  @@index([parentId])
-  @@map("story_comments")
+  @@index([isPublic])
+  @@map("photo_galleries")
 }
 
-// Phase 4: Advanced Features - Currency & Translation Support
+model Message {
+  id         String     @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+
+  sender     User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+  @@map("messages")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // itinerary_reminder, weather_alert, etc.
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@map("notifications")
+}
+
 model Currency {
   id         String   @id @default(cuid())
   code       String   @unique // USD, IDR, EUR, THB, SGD, MYR, etc.
@@ -638,105 +294,129 @@ model Currency {
   @@map("currencies")
 }
 
-model Translation {
+model Transportation {
   id            String   @id @default(cuid())
-  tableName     String   // destinations, activities, accommodations, etc.
-  recordId      String   // ID of the record being translated
-  fieldName     String   // name, description, content, title, etc.
-  languageCode  String   // en, id, th, cn, jp, kr, etc.
-  translatedText String  @db.Text
-  autoTranslated Boolean  @default(true) // true for machine translation, false for human
-  verified      Boolean  @default(false) // has been reviewed by native speaker
+  type          String   // flight, train, bus, car_rental, taxi
+  provider      String   // Garuda Indonesia, Kereta Api, etc.
+  route         String   // origin-destination
+  schedule      String   // JSON: { departureTime, arrivalTime, duration, frequency }
+  pricing       String   // JSON: { economy, business, firstClassRates }
+  availability  String   // JSON: { seatsAvailable, bookedSeats }
+  bookingUrl    String?
+  status        String   @default("active") // active, cancelled, delayed
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([tableName, recordId, fieldName, languageCode])
-  @@index([tableName])
-  @@index([languageCode])
-  @@index([verified])
-  @@map("translations")
-}
-
-// Phase 4: Insurance Support
-model TravelInsurance {
-  id            String   @id @default(cuid())
-  name          String
-  provider      String   // insurance company name
-  type          String   // basic, comprehensive, premium
-  coverage      Json     // { medical: 50000, tripCancellation: true, lostBaggage: true, etc. }
-  targetCountry String   // Indonesia, Thailand, Malaysia, etc.
-  pricing       Json     // { perDay: 5, maxDays: 30, annualRate: 150, etc. }
-  termsUrl      String?
-  claimProcess  String?  @db.Text
-  rating        Float    @default(0)
-  reviewCount   Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([provider])
-  @@index([targetCountry])
-  @@index([isActive])
-  @@map("travel_insurances")
-}
-
-// Additional models for enhanced functionality
-
-// User-to-user messaging system
-model Message {
-  id         String     @id @default(cuid())
-  senderId   String
-  receiverId String
-  content    String     @db.Text
-  isRead     Boolean    @default(false)
-  readAt     DateTime?
-  messageType String    @default("text") // text, image, location, itinerary_share
-  attachment String?    // url to attachment if any
-  itineraryId String?   // if sharing an itinerary
-  createdAt  DateTime   @default(now())
-
-  sender     User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver   User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([isRead])
-  @@map("messages")
-}
-
-// Travel companion matching
-model CompanionMatch {
-  id          String   @id @default(cuid())
-  userId      String
-  preferences Json     // { ageRange, interests, travelStyle, groupSize, etc. }
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId])
-  @@map("companion_matches")
-}
-
-// Notification system
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String   // itinerary_reminder, weather_alert, price_drop, companion_match, etc.
-  title     String
-  message   String
-  data      Json?    // additional data for the notification
-  isRead    Boolean  @default(false)
-  readAt    DateTime?
-  urgent    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
   @@index([type])
-  @@index([isRead])
-  @@index([urgent])
-  @@map("notifications")
+  @@index([route])
+  @@map("transportations")
+}
+
+model Accommodation {
+  id            String    @id @default(cuid())
+  name          String
+  city          String
+  province      String    @default("Jawa Timur")
+  type          String    // hotel, hostel, villa, resort, homestay, budget-lodge
+  category      String    // luxury, moderate, budget
+  description   String
+  image         String
+  images        String?   // JSON array: ["img1.jpg", "img2.jpg"]
+  rating        Float?    // 1-5 stars
+  priceRange    String    // budget, moderate, luxury
+  coordinates   String    // JSON: { lat, lng }
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  amenities     String    // JSON: { wifi: true, ac: true, pool: false, etc. }
+  capacity      Int       @default(2) // max guests
+  breakfast     Boolean   @default(false)
+  checkInTime   String    @default("14:00")
+  checkOutTime  String    @default("11:00")
+  cancellationPolicy String?
+  totalRooms    Int       @default(10)
+  availability  String    // JSON: { availableRooms, bookedRooms }
+  bookingUrl    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([city])
+  @@index([type])
+  @@index([category])
+  @@index([priceRange])
+  @@index([coordinates])
+  @@map("accommodations")
+}
+
+model Restaurant {
+  id            String    @id @default(cuid())
+  name          String
+  city          String
+  province      String    @default("Jawa Timur")
+  category      String    // traditional, seafood, fine-dining, casual, street-food, cafe, bar
+  cuisine       String    // indonesian, chinese, international, fusion, local, arab
+  description   String
+  image         String
+  images        String?   // JSON array: ["img1.jpg", "img2.jpg"]
+  rating        Float?    // 1-5 stars
+  priceRange    String    // budget, moderate, luxury
+  coordinates   String    // JSON: { lat, lng }
+  address       String?
+  phone         String?
+  website       String?
+  specialties   String    // JSON: ["Sate", "Rendang", "Soto"] - signature dishes
+  menuItems     String    // JSON: { main: [], appetizer: [], dessert: [], drinks: [] }
+  operatingHours String   // JSON: { monday: "09:00-22:00", tuesday: "09:00-22:00", etc. }
+  dietaryOptions String?  // JSON: { halal: true, vegetarian: true, vegan: false, glutenFree: false }
+  seatingCapacity Int     @default(50)
+  reservationRequired Boolean @default(false)
+  paymentMethods String?  // JSON: ["cash", "card", "digital_wallet"]
+  parking       Boolean   @default(false)
+  wifi          Boolean   @default(true)
+  delivery      Boolean   @default(false)
+  takeaway      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([city])
+  @@index([category])
+  @@index([cuisine])
+  @@index([priceRange])
+  @@index([coordinates])
+  @@map("restaurants")
+}
+
+// Enhanced Itinerary Block System
+model ItineraryBlock {
+  id            String    @id @default(cuid())
+  itineraryDayId String
+  type          String    // accommodation, transportation, destination, restaurant, custom, activity
+  order         Int       @default(0)
+  title         String
+  description   String?
+  startTime     String?   // HH:MM format
+  endTime       String?   // HH:MM format
+  duration      Int?      // in minutes
+  cost          Float?    // cost in IDR
+  currency      String    @default("IDR")
+  
+  // Block-specific data stored as JSON
+  blockData     String    // JSON with type-specific information
+  
+  // Relationships
+  itineraryDay  ItineraryDay @relation(fields: [itineraryDayId], references: [id], onDelete: Cascade)
+  accommodationId String?   // if block type is 'accommodation'
+  transportationId String?  // if block type is 'transportation'
+  destinationId   String?   // if block type is 'destination'
+  restaurantId    String?   // if block type is 'restaurant'
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([itineraryDayId])
+  @@index([type])
+  @@index([order])
+  @@index([startTime])
+  @@map("itinerary_blocks")
 }
