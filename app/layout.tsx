@@ -1,51 +1,60 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import AnimatedLayout from "./layout-animasi";
-import AnimatedBg from "./animasi-bg";
-import { AuthProvider } from "@/lib/contexts/AuthContext"; // ✅ path sesuai struktur kamu
+// Client component for the actual layout
+"use client";
 
-// === Font Configuration ===
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
+import "@/app/globals.css";
+import { NotificationProvider, useNotification } from "@/lib/components/NotificationProvider";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
+import { SmartItineraryProvider } from "@/lib/contexts/SmartItineraryContext";
+import { useEffect } from "react";
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
+// Global notification hook component
+function GlobalNotificationHandler() {
+  const { addNotification } = useNotification();
 
-// === Metadata ===
-export const metadata: Metadata = {
-  title: "Jatour App",
-  description: "Login/Register UI",
-};
+  useEffect(() => {
+    // Expose notification function globally
+    (window as any).showNotification = (notification: {
+      title: string;
+      message: string;
+      type: 'success' | 'error' | 'info' | 'warning';
+      duration?: number;
+    }) => {
+      addNotification(notification);
+    };
 
-// === Root Layout ===
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+    // Listen for custom notification events
+    const handleCustomNotification = (event: CustomEvent) => {
+      addNotification(event.detail);
+    };
+
+    window.addEventListener('jatour-notification', handleCustomNotification as EventListener);
+
+    return () => {
+      window.removeEventListener('jatour-notification', handleCustomNotification as EventListener);
+      delete (window as any).showNotification;
+    };
+  }, [addNotification]);
+
+  return null;
+}
+
+function RootLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        {/* ✅ Preload images for smoother transitions */}
-        <link rel="preload" as="image" href="/Bali-Pantai.webp" />
-        <link rel="preload" as="image" href="/semeru.webp" />
-        <link rel="preload" as="image" href="/main-bg.webp" />
-      </head>
-
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 overflow-hidden`}
-      >
-        {/* ✅ Global Auth Context Wrapper */}
+      <body className="min-h-screen bg-gray-50 font-sans antialiased">
         <AuthProvider>
-          {/* ✅ Background and layout animation layers */}
-          <AnimatedBg>
-            <AnimatedLayout>{children}</AnimatedLayout>
-          </AnimatedBg>
+          <SmartItineraryProvider>
+            <NotificationProvider>
+              <GlobalNotificationHandler />
+              {children}
+            </NotificationProvider>
+          </SmartItineraryProvider>
         </AuthProvider>
       </body>
     </html>
   );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <RootLayoutContent>{children}</RootLayoutContent>;
 }

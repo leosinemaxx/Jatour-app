@@ -11,7 +11,7 @@ export default function AnimatedLayout({ children }: { children: React.ReactNode
   
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 1000); // durasi loader
+    const timer = setTimeout(() => setIsLoading(false), 300); // Reduced loader time for better UX
     return () => clearTimeout(timer);
   }, [pathname]);
 

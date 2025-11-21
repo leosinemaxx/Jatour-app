@@ -1,171 +1,134 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/contexts/AuthContext";
+import { useSearchParams } from "next/navigation";
 import ProtectedRoute from "../components/secure_route";
 import NavbarDash from "../components/navbar-dash";
-import DestCard from "../components/dest-card";
-import ExploreSection from "./section/feedpage";
+import DestCardEnhanced from "@/components/dest-card-enhanced";
+import DestinationDetailModal from "@/components/destination-detail-modal";
+import HomeSection from "./section/homepage";
+import ExploreSection from "./section/explorepage";
+import SmartItinerarySection from "./section/smart-itinerary-section";
+import PlannerSection from "./section/plannerpage";
+import ItinerarySection from "./section/itinerarypage";
+import SettingsSection from "./section/settingspage";
+import PromoPage from "./section/promo-page";
+import KulinerPage from "./section/kuliner-page";
+import CustomerServicePage from "./section/customer-service-page";
 import { Destination, Itinerary } from "@/app/datatypes";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
+
+// Tab type for original navbar
+type TabKey = "home" | "explore" | "smart" | "plan" | "settings";
 
 export default function DashboardPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
   
-  // 🔹 State tab navigasi
-  const [activeTab, setActiveTab] = useState<"home" | "explore" | "plan" | "settings">("home");
+  // 🔹 State tab navigasi - Use original tabs for navbar
+  const [activeTab, setActiveTab] = useState<TabKey>("home");
 
   // 🔹 State data destinasi & itinerary
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+
+  // 🔹 Check for tab parameter in URL
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam && ["home", "explore", "smart", "plan", "settings"].includes(tabParam)) {
+      setActiveTab(tabParam as TabKey);
+    }
+  }, [searchParams]);
+
+  // 🔹 Check for direct page access (for new pages)
+  useEffect(() => {
+    const pageParam = searchParams?.get("page");
+    if (pageParam && ["promo", "kuliner", "customer-service"].includes(pageParam)) {
+      // For new pages, show them directly without changing the active tab
+      // This maintains navbar consistency while allowing direct navigation
+      if (pageParam === "promo") {
+        setActiveTab("smart"); // Use smart tab as placeholder
+      } else if (pageParam === "kuliner") {
+        setActiveTab("plan"); // Use plan tab as placeholder
+      } else if (pageParam === "customer-service") {
+        setActiveTab("settings"); // Use settings tab as placeholder
+      }
+    }
+  }, [searchParams]);
 
   // 🔹 Fetch data saat mount
   useEffect(() => {
-    if (authLoading || !user) return;
-
     let mounted = true;
-    Promise.all([
-      apiFetch("/destinations"),
-      apiFetch("/itineraries")
-    ])
-      .then(([dests, its]) => {
+    const fetchData = async () => {
+      try {
+        const [dests, its] = await Promise.all([
+          apiFetch("/destinations").catch(() => []),
+          apiFetch("/itineraries").catch(() => [])
+        ]);
         if (!mounted) return;
-        setDestinations(dests ?? []);
-        setItineraries(its ?? []);
-      })
-      .catch((e) => console.error("fetch error:", e))
-      .finally(() => mounted && setLoading(false));
-
+        setDestinations(Array.isArray(dests) ? dests : []);
+        setItineraries(Array.isArray(its) ? its : []);
+      } catch (e) {
+        console.error("fetch error:", e);
+        if (mounted) {
+          setDestinations([]);
+          setItineraries([]);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    
+    fetchData();
     return () => {
       mounted = false;
     };
-  }, [authLoading, user]);
+  }, []);
 
-  // 🔹 Konten tiap tab
+  // 🔹 Konten tiap tab - Include new pages
   const renderSection = () => {
-    if (authLoading || loading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading...</div>
-        </div>
-      );
-    }
-
+    const pageParam = searchParams?.get("page");
+    
+    // Check for direct page access first
+    if (pageParam === "promo") return <PromoPage />;
+    if (pageParam === "kuliner") return <KulinerPage />;
+    if (pageParam === "customer-service") return <CustomerServicePage />;
+    
+    // Otherwise show the regular tabs
     switch (activeTab) {
       case "home":
-        return (
-          <section>
-            <h1 className="text-2xl font-bold mb-4">
-              Welcome back, {user?.fullName || 'User'}!
-            </h1>
-            {destinations.length > 0 ? (
-              <>
-                <h2 className="text-lg font-semibold mb-3 text-slate-800">
-                  Recommended Destinations
-                </h2>
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {destinations.map((d) => (
-                    <div key={d.id} className="flex-shrink-0">
-                      <DestCard item={d} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-slate-600">No destinations available yet.</p>
-            )}
-          </section>
-        );
+        return <HomeSection />;
 
       case "explore":
-        return (
-          <section className="pb-24">
-            <ExploreSection />
-          </section>
-        );
+        return <ExploreSection />;
+
+      case "smart":
+        return <SmartItinerarySection />;
 
       case "plan":
-        return (
-          <section>
-            <h1 className="text-2xl font-bold mb-4">My Itineraries</h1>
-            {itineraries.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {itineraries.map((it) => (
-                  <div
-                    key={it.id}
-                    className="w-full bg-white/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="font-bold text-lg mb-2">{it.title}</h3>
-                    <div className="text-sm text-slate-600">
-                      <p>📍 {it.destination}</p>
-                      <p>📅 {it.startDate} - {it.endDate}</p>
-                      <p className="mt-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          it.status === 'upcoming' ? 'bg-blue-100 text-blue-700' :
-                          it.status === 'ongoing' ? 'bg-green-100 text-green-700' :
-                          it.status === 'completed' ? 'bg-gray-100 text-gray-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {it.status.charAt(0).toUpperCase() + it.status.slice(1)}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-slate-600 mb-4">No itineraries yet. Start planning your first trip!</p>
-                <button
-                  onClick={() => setActiveTab("explore")}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Explore Destinations
-                </button>
-              </div>
-            )}
-          </section>
-        );
+        return <ItinerarySection />;
 
       case "settings":
-        return (
-          <section>
-            <h1 className="text-2xl font-bold mb-4">Settings</h1>
-            <div className="bg-white/80 rounded-2xl p-6 shadow-sm">
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Account Information</h3>
-                <p className="text-sm text-slate-600">Email: {user?.email}</p>
-                <p className="text-sm text-slate-600">Name: {user?.fullName}</p>
-                <p className="text-sm text-slate-600">Phone: {user?.phone}</p>
-              </div>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Preferences</h3>
-                <p className="text-sm text-slate-600">
-                  Theme: {user?.preferences?.theme || 'light'}
-                </p>
-                <p className="text-sm text-slate-600">
-                  Language: {user?.preferences?.language || 'en'}
-                </p>
-                <p className="text-sm text-slate-600">
-                  Notifications: {user?.preferences?.notifications ? 'Enabled' : 'Disabled'}
-                </p>
-              </div>
-            </div>
-          </section>
-        );
+        return <SettingsSection />;
 
       default:
-        return null;
+        return <HomeSection />;
     }
   };
 
-  // 🔹 Tampilan utama dashboard
+  // 🔹 Tampilan utama dashboard - Fullscreen scaling
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white text-slate-900 relative">
-        <div className="pb-24 px-5 pt-6">{renderSection()}</div>
+      <main className="min-h-screen bg-linear-to-b from-gray-50 to-white text-gray-900 relative overflow-x-hidden">
+        <div className="pb-20 sm:pb-24 px-4 sm:px-6 pt-4 sm:pt-6">{renderSection()}</div>
         <NavbarDash activeTab={activeTab} setActiveTab={setActiveTab} />
+        <DestinationDetailModal
+          destination={selectedDestination}
+          isOpen={!!selectedDestination}
+          onClose={() => setSelectedDestination(null)}
+        />
       </main>
     </ProtectedRoute>
   );

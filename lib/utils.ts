@@ -1,3 +1,11 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+// shadcn/ui utility function
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 // Date utilities
 export const formatDate = (dateString: string, format: "short" | "long" | "full" = "short"): string => {
   const date = new Date(dateString);

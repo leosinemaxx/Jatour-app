@@ -10,7 +10,7 @@ import {
   Notification,
   Recommendation 
 } from "@/app/datatypes";
-import api from "@/lib/api";
+import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
 // Generic data fetching hook
@@ -33,9 +33,10 @@ export function useData<T>(
         if (mounted) {
           setData(result);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (mounted) {
-          setError(err.message || "Failed to fetch data");
+          const error = err as Error;
+          setError(error.message || "Failed to fetch data");
         }
       } finally {
         if (mounted) {
@@ -57,8 +58,9 @@ export function useData<T>(
       setError(null);
       const result = await fetchFn();
       setData(result);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch data");
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || "Failed to fetch data");
     } finally {
       setIsLoading(false);
     }
