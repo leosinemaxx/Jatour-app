@@ -427,7 +427,7 @@ async function main() {
 
   // Create sample user first
   console.log('👤 Creating/updating sample user...');
-  const demoPassword = 'demo123';
+  const demoPassword = 'demo1234';
   const hashedPassword = await bcrypt.hash(demoPassword, 10);
   
   const sampleUser = await prisma.user.upsert({
