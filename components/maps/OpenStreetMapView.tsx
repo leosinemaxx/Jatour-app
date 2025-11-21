@@ -48,21 +48,37 @@ const OpenStreetMapView = memo(({
   zoom = 15 
 }: OpenStreetMapViewProps) => {
   const [mounted, setMounted] = useState(false);
+  const [instanceKey] = useState(() => `${Date.now()}-${Math.random()}`);
+  const [ready, setReady] = useState(false);
 
   // Memoize center coordinates to prevent unnecessary re-renders
   const center = useMemo(() => [lat, lng] as [number, number], [lat, lng]);
+  const mapInstanceKey = useMemo(
+    () => `${instanceKey}-${lat}-${lng}-${zoom}`,
+    [instanceKey, lat, lng, zoom]
+  );
 
   // Ensure component only renders on client side
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  // Force the map to mount on the next animation frame so the DOM container
+  // is brand new before Leaflet touches it (prevents double-initialization in StrictMode)
+  useEffect(() => {
+    if (!mounted) return;
+    setReady(false);
+    const raf = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, [mounted, mapInstanceKey]);
+
+  if (!mounted || !ready) {
     return <MapLoadingSkeleton />;
   }
 
   return (
     <div 
+      key={mapInstanceKey}
       style={{ 
         width: "100%", 
         height: height, 
@@ -72,6 +88,7 @@ const OpenStreetMapView = memo(({
       }}
     >
       <DynamicMap
+        key={mapInstanceKey}
         center={center}
         zoom={zoom}
         name={name}

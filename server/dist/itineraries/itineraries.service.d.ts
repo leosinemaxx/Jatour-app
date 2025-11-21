@@ -140,10 +140,10 @@ export declare class ItinerariesService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            activities: import("@prisma/client/runtime/library").JsonValue;
             itineraryId: string;
             dayNumber: number;
             date: Date;
-            activities: import("@prisma/client/runtime/library").JsonValue;
         }[];
         budgetPlan: {
             id: string;

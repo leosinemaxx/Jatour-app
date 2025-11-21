@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
   // Optimize for mobile
   compress: true,
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: false,
   // Performance optimizations
   experimental: {
     optimizeCss: true,

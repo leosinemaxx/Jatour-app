@@ -50,6 +50,8 @@ const RouteMapView = ({
   showRoute = true
 }: RouteMapViewProps) => {
   const [mounted, setMounted] = useState(false);
+  const [instanceKey] = useState(() => `${Date.now()}-${Math.random()}`);
+  const [ready, setReady] = useState(false);
 
   // Calculate center and zoom if not provided
   const center = useMemo(() => {
@@ -76,12 +78,25 @@ const RouteMapView = ({
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  const mapInstanceKey = useMemo(
+    () => `${instanceKey}-${from.lat}-${from.lng}-${to.lat}-${to.lng}-${calculatedZoom}`,
+    [instanceKey, from, to, calculatedZoom]
+  );
+
+  useEffect(() => {
+    if (!mounted) return;
+    setReady(false);
+    const raf = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, [mounted, mapInstanceKey]);
+
+  if (!mounted || !ready) {
     return <MapLoadingSkeleton />;
   }
 
   return (
     <div 
+      key={mapInstanceKey}
       style={{ 
         width: "100%", 
         height: height, 
@@ -91,6 +106,7 @@ const RouteMapView = ({
       }}
     >
       <DynamicRouteMap
+        key={mapInstanceKey}
         center={center}
         zoom={calculatedZoom}
         from={from}

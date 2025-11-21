@@ -100,9 +100,12 @@ export default function DestinationDetailModal({
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const cardSurfaceClass =
+    "bg-white border border-gray-100 shadow-lg";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-white rounded-3xl shadow-2xl border border-gray-100">
         <AnimatePresence mode="wait">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -200,6 +203,12 @@ export default function DestinationDetailModal({
                         </motion.button>
                       </div>
                     </div>
+                    {destination.disabledFriendly && (
+                      <div className="flex items-center gap-2 text-sm text-blue-600 mt-1">
+                        <CircleCheck className="h-4 w-4" />
+                        <span>Ramah Disabilitas</span>
+                      </div>
+                    )}
                     <DialogDescription className="flex items-center gap-2 text-base">
                       <MapPin className="h-4 w-4" />
                       {destination.address || `${destination.city}, ${destination.province || "Jawa Timur"}`}
@@ -229,11 +238,20 @@ export default function DestinationDetailModal({
               </DialogHeader>
 
               {/* Description */}
-              <Card>
+              <Card className={cardSurfaceClass}>
                 <CardContent className="p-4">
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {destination.description}
                   </p>
+                  {destination.tags && destination.tags.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {destination.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="capitalize text-xs">
+                          #{tag.replace(/-/g, " ")}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -241,7 +259,9 @@ export default function DestinationDetailModal({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {destination.openingHours && (
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${cardSurfaceClass} bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200`}
+                    >
                       <CardContent className="p-3 text-center">
                         <Clock className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">Hours</p>
@@ -257,7 +277,9 @@ export default function DestinationDetailModal({
                     whileTap={{ scale: 0.95 }}
                     className="block"
                   >
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${cardSurfaceClass} bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200`}
+                    >
                       <CardContent className="p-3 text-center">
                         <Phone className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">Contact</p>
@@ -275,7 +297,9 @@ export default function DestinationDetailModal({
                     whileTap={{ scale: 0.95 }}
                     className="block"
                   >
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${cardSurfaceClass} bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200`}
+                    >
                       <CardContent className="p-3 text-center">
                         <Globe className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">Website</p>
@@ -287,7 +311,9 @@ export default function DestinationDetailModal({
                   </motion.a>
                 )}
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                  <Card
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${cardSurfaceClass}`}
+                  >
                     <CardContent className="p-3 text-center">
                       <MapPin className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Category</p>
@@ -299,7 +325,7 @@ export default function DestinationDetailModal({
 
               {/* Accessibility Features */}
               {destination.disabledFriendly && destination.accessibilityFeatures && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className={`${cardSurfaceClass} bg-blue-50 border-blue-200`}>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <CircleCheck className="h-5 w-5 text-blue-600" />
@@ -349,7 +375,7 @@ export default function DestinationDetailModal({
 
               {/* OpenStreetMap */}
               {coordinates && (
-                <Card>
+                <Card className={cardSurfaceClass}>
                   <CardContent className="p-0">
                     <div className="p-4 border-b">
                       <h3 className="font-semibold flex items-center gap-2">

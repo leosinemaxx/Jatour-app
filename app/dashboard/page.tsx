@@ -2,13 +2,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import ProtectedRoute from "../components/secure_route";
 import NavbarDash from "../components/navbar-dash";
 import DestCardEnhanced from "@/components/dest-card-enhanced";
 import DestinationDetailModal from "@/components/destination-detail-modal";
 import HomeSection from "./section/homepage";
-import ExploreSection from "./section/feedpage";
-import SmartItinerarySection from "./section/smart-itinerary";
+import ExploreSection from "./section/explorepage";
+import SmartItinerarySection from "./section/smart-itinerary-section";
 import PlannerSection from "./section/plannerpage";
 import ItinerarySection from "./section/itinerarypage";
 import SettingsSection from "./section/settingspage";
@@ -16,6 +17,8 @@ import { Destination, Itinerary } from "@/app/datatypes";
 import { apiFetch } from "@/lib/api-client";
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  
   // 🔹 State tab navigasi
   const [activeTab, setActiveTab] = useState<"home" | "explore" | "smart" | "plan" | "settings">("home");
 
@@ -24,6 +27,14 @@ export default function DashboardPage() {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+
+  // 🔹 Check for tab parameter in URL
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam && ["home", "explore", "smart", "plan", "settings"].includes(tabParam)) {
+      setActiveTab(tabParam as "home" | "explore" | "smart" | "plan" | "settings");
+    }
+  }, [searchParams]);
 
   // 🔹 Fetch data saat mount
   useEffect(() => {

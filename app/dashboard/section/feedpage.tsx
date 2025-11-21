@@ -1,298 +1,328 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Search, 
+  MapPin, 
+  DollarSign, 
+  Filter,
+  Map as MapIcon,
+  Globe,
+  SlidersHorizontal,
+  X
+} from "lucide-react";
 import DestCardEnhanced from "@/components/dest-card-enhanced";
 import DestinationDetailModal from "@/components/destination-detail-modal";
-import { LoadingSpinner, LoadingSkeleton } from "@/components/ui/loading";
-import { apiClient } from "@/lib/api-client";
-import { Search, Train, Bus, UtensilsCrossed, Coffee, Ticket, Clock, CircleCheck, Filter } from "lucide-react";
-import Image from "next/image";
+import { LoadingSkeleton } from "@/components/ui/loading";
+import { useDestinations } from "@/lib/hooks/useDestinations";
 import type { Destination } from "@/app/datatypes";
 
-interface ItineraryCard {
-  id: string;
-  title: string;
-  days: number;
-  hotel: number;
-  destinations: number;
-  image: string;
-}
+// Destination type categories
+const destinationTypes = [
+  { name: "All", value: null },
+  { name: "Mountain", value: "Mountain" },
+  { name: "Beach", value: "Beach" },
+  { name: "Temple", value: "Temple" },
+  { name: "Nature", value: "Nature" },
+  { name: "Park", value: "Park" },
+  { name: "Museum", value: "Museum" },
+];
 
-export default function ExploreSection() {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+// Price range options
+const priceRanges = [
+  { name: "All", value: null },
+  { name: "Budget", value: "budget" },
+  { name: "Moderate", value: "moderate" },
+  { name: "Luxury", value: "luxury" },
+];
+
+export default function FeedPage() {
+  const { destinations, isLoading: loading } = useDestinations();
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showAccessibleOnly, setShowAccessibleOnly] = useState(false);
-  const [selected, setSelected] = useState<Destination | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [locationFilter, setLocationFilter] = useState("");
 
-  const categories = [
-    { name: "Train", icon: Train, color: "from-blue-500 to-cyan-500" },
-    { name: "Bus", icon: Bus, color: "from-green-500 to-emerald-500" },
-    { name: "Restaurant", icon: UtensilsCrossed, color: "from-orange-500 to-red-500" },
-    { name: "Cafe", icon: Coffee, color: "from-amber-500 to-yellow-500" },
-    { name: "Event", icon: Ticket, color: "from-purple-500 to-pink-500" },
-  ];
-
-  const recentlyViewed: ItineraryCard[] = [
-    {
-      id: "1",
-      title: "4 days trip to Bojonegoro",
-      days: 4,
-      hotel: 1,
-      destinations: 5,
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop",
-    },
-    {
-      id: "2",
-      title: "2 days trip to Malang",
-      days: 2,
-      hotel: 1,
-      destinations: 3,
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop",
-    },
-  ];
-
-  const popularItineraries: ItineraryCard[] = [
-    {
-      id: "3",
-      title: "7 days trip to Surabaya",
-      days: 7,
-      hotel: 1,
-      destinations: 5,
-      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop",
-    },
-    {
-      id: "4",
-      title: "5 days trip to Banyuwangi",
-      days: 5,
-      hotel: 1,
-      destinations: 3,
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop",
-    },
-  ];
-
-  useEffect(() => {
-    let mounted = true;
-    const fetchData = async () => {
-      try {
-        const data = await apiClient.getDestinations();
-        if (mounted) {
-          setDestinations(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        console.error("Gagal memuat data destinasi:", error);
-        if (mounted) {
-          setDestinations([]);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchData();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
+  // Filter destinations based on all criteria
   const filtered = useMemo(() => {
     return destinations.filter((d) => {
       const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
         d.city.toLowerCase().includes(search.toLowerCase()) ||
         d.description?.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = !selectedCategory || d.category === selectedCategory;
-      const matchesAccessibility = !showAccessibleOnly || d.disabledFriendly === true;
-      return matchesSearch && matchesCategory && matchesAccessibility;
+      
+      const matchesType = !selectedType || d.category === selectedType;
+      const matchesPriceRange = !selectedPriceRange || d.priceRange === selectedPriceRange;
+      const matchesLocation = !locationFilter || 
+        d.city.toLowerCase().includes(locationFilter.toLowerCase()) ||
+        d.province?.toLowerCase().includes(locationFilter.toLowerCase());
+      
+      return matchesSearch && matchesType && matchesPriceRange && matchesLocation;
     });
-  }, [destinations, search, selectedCategory, showAccessibleOnly]);
+  }, [destinations, search, selectedType, selectedPriceRange, locationFilter]);
 
-  const featuredDestinations = useMemo(() => filtered.filter(d => d.featured), [filtered]);
-  const regularDestinations = useMemo(() => filtered.filter(d => !d.featured), [filtered]);
+  const clearFilters = () => {
+    setSelectedType(null);
+    setSelectedPriceRange(null);
+    setLocationFilter("");
+    setSearch("");
+  };
 
-  const ItineraryCard = ({ item }: { item: ItineraryCard }) => (
-    <motion.div
-      whileHover={{ y: -4, scale: 1.02 }}
-      className="cursor-pointer"
-    >
-      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow">
-        <div className="relative h-32 sm:h-40">
-          <Image
-            src={item.image}
-            alt={item.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-            <h3 className="font-bold text-sm sm:text-base mb-1">{item.title}</h3>
-            <div className="flex items-center gap-3 text-xs opacity-90">
-              <span>{item.hotel} Hotel</span>
-              <span>•</span>
-              <span>{item.destinations} Destinations</span>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </motion.div>
-  );
+  const hasActiveFilters = selectedType || selectedPriceRange || locationFilter || search;
 
   return (
     <div className="space-y-6 pb-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          Destination Feed
+        </h1>
+        <p className="text-gray-600 text-sm sm:text-base">
+          Explore destinations with detailed information, maps, and more
+        </p>
+      </motion.div>
+
       {/* Search Bar */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
       >
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             type="text"
-            placeholder="Cari Itinerary Pilihanmu..."
+            placeholder="Search destinations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-12 h-14 text-base rounded-2xl border-2 border-gray-200 focus:border-blue-500 shadow-sm"
           />
+          <Button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 ${
+              hasActiveFilters ? "bg-blue-600 text-white" : "bg-white border border-gray-300"
+            }`}
+            size="sm"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
         </div>
       </motion.div>
 
-      {/* Category Buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-5 gap-3"
-      >
-        {categories.map((cat, index) => (
-          <motion.button
-            key={cat.name}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.05 * index }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setSelectedCategory(cat.name)}
-            className={`flex flex-col items-center gap-2 p-4 rounded-2xl shadow-md hover:shadow-lg transition-all ${
-              selectedCategory === cat.name
-                ? `bg-gradient-to-br ${cat.color} text-white`
-                : "bg-white text-gray-700"
-            }`}
-          >
-            <cat.icon className="h-6 w-6" />
-            <span className="text-xs font-medium">{cat.name}</span>
-          </motion.button>
-        ))}
-      </motion.div>
-
-      {/* Accessibility Filter */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="mb-4"
-      >
-        <Button
-          onClick={() => setShowAccessibleOnly(!showAccessibleOnly)}
-          className={`w-full sm:w-auto ${
-            showAccessibleOnly
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-white border border-gray-300 hover:bg-gray-50"
-          }`}
+      {/* Filters Section */}
+      {showFilters && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="space-y-4"
         >
-          <CircleCheck className="h-4 w-4 mr-2" />
-          {showAccessibleOnly ? "Show All" : "Show Accessible Only"}
-        </Button>
+          <Card className="border-2 border-blue-200 bg-blue-50/50">
+            <CardContent className="p-4 space-y-4">
+              {/* Location Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <MapPin className="h-4 w-4" />
+                  Location
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Filter by city or province..."
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+
+              {/* Destination Type Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <MapIcon className="h-4 w-4" />
+                  Destination Type
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {destinationTypes.map((type) => (
+                    <Button
+                      key={type.name}
+                      onClick={() => setSelectedType(type.value)}
+                      size="sm"
+                      className={`${
+                        selectedType === type.value
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {type.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Range Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <DollarSign className="h-4 w-4" />
+                  Price Range
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {priceRanges.map((range) => (
+                    <Button
+                      key={range.name}
+                      onClick={() => setSelectedPriceRange(range.value)}
+                      size="sm"
+                      className={`${
+                        selectedPriceRange === range.value
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {range.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
+                <Button
+                  onClick={clearFilters}
+                  className="w-full bg-red-100 text-red-700 hover:bg-red-200 border-0"
+                  size="sm"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All Filters
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Active Filters Display */}
+      {hasActiveFilters && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-wrap gap-2"
+        >
+          {search && (
+            <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
+              Search: {search}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => setSearch("")}
+              />
+            </Badge>
+          )}
+          {selectedType && (
+            <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
+              Type: {selectedType}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => setSelectedType(null)}
+              />
+            </Badge>
+          )}
+          {selectedPriceRange && (
+            <Badge className="bg-purple-100 text-purple-800 border-purple-200 flex items-center gap-1">
+              Price: {selectedPriceRange}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => setSelectedPriceRange(null)}
+              />
+            </Badge>
+          )}
+          {locationFilter && (
+            <Badge className="bg-orange-100 text-orange-800 border-orange-200 flex items-center gap-1">
+              Location: {locationFilter}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => setLocationFilter("")}
+              />
+            </Badge>
+          )}
+        </motion.div>
+      )}
+
+      {/* Results Count */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center justify-between"
+      >
+        <p className="text-sm text-gray-600">
+          Showing <span className="font-semibold">{filtered.length}</span> destination{filtered.length !== 1 ? "s" : ""}
+        </p>
       </motion.div>
 
-      {/* Recently Viewed */}
-      {recentlyViewed.length > 0 && (
+      {/* Destinations Grid */}
+      {loading ? (
+        <LoadingSkeleton count={6} />
+      ) : filtered.length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-5 w-5 text-gray-600" />
-            <h2 className="text-xl font-bold text-gray-900">Terakhir Kali Dilihat</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {recentlyViewed.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <ItineraryCard item={item} />
-              </motion.div>
-            ))}
-          </div>
+          {filtered.map((dest, index) => (
+            <motion.div
+              key={dest.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 * index }}
+            >
+              <DestCardEnhanced
+                item={dest}
+                onClick={() => setSelectedDestination(dest)}
+              />
+            </motion.div>
+          ))}
         </motion.div>
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="space-y-4">
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <Search className="h-8 w-8 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  No destinations found
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Try adjusting your filters or search terms
+                </p>
+              </div>
+              {hasActiveFilters && (
+                <Button
+                  onClick={clearFilters}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Popular Itinerary */}
-      {popularItineraries.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Itenary Populer</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {popularItineraries.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <ItineraryCard item={item} />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Featured Destinations */}
-      {featuredDestinations.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Featured Destinations</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuredDestinations.map((dest, index) => (
-              <motion.div
-                key={dest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * index }}
-              >
-                <DestCardEnhanced
-                  item={dest}
-                  onClick={() => setSelected(dest)}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Destination Detail Modal */}
-      {selected && (
+      {/* Destination Detail Modal - includes map, website visit, and all features */}
+      {selectedDestination && (
         <DestinationDetailModal
-          destination={selected}
-          isOpen={!!selected}
-          onClose={() => setSelected(null)}
+          destination={selectedDestination}
+          isOpen={!!selectedDestination}
+          onClose={() => setSelectedDestination(null)}
         />
       )}
     </div>

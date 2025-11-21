@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { 
   MapPin, 
@@ -15,38 +15,33 @@ import {
   User,
   Wallet,
   Heart,
-  Share2
+  Share2,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import DestCardEnhanced from "@/components/dest-card-enhanced";
+import DestinationDetailModal from "@/components/destination-detail-modal";
 import { LoadingSkeleton } from "@/components/ui/loading";
-import { apiClient } from "@/lib/api-client";
+import { useDestinations } from "@/lib/hooks/useDestinations";
 import Image from "next/image";
 import type { Destination } from "@/app/datatypes";
 
 export default function HomeSection() {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { destinations, isLoading: loading, refresh } = useDestinations({ featured: true });
   const [weather, setWeather] = useState({ temp: 22, condition: "Cerah Berawan" });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await apiClient.getDestinations({ featured: true });
-        setDestinations(Array.isArray(data) ? data.slice(0, 3) : []);
-      } catch (error) {
-        console.error("Failed to fetch destinations:", error);
-        setDestinations([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refresh();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
-  const featuredDestination = useMemo(() => destinations[0] || null, [destinations]);
-  const recommendations = useMemo(() => destinations.slice(1), [destinations]);
+  const displayDestinations = useMemo(() => destinations.slice(0, 3), [destinations]);
+  const featuredDestination = useMemo(() => displayDestinations[0] || null, [displayDestinations]);
+  const recommendations = useMemo(() => displayDestinations.slice(1), [displayDestinations]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -142,6 +137,7 @@ export default function HomeSection() {
           <motion.div
             key={feature.label}
             initial={{ opacity: 0, scale: 0.8 }}
+            ini
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 * index }}
             whileHover={{ scale: 1.05 }}
@@ -164,7 +160,10 @@ export default function HomeSection() {
           transition={{ delay: 0.3 }}
           className="mb-6"
         >
-          <Card className="overflow-hidden border-0 shadow-xl">
+          <Card
+            className="overflow-hidden border-0 shadow-xl cursor-pointer"
+            onClick={() => setSelectedDestination(featuredDestination)}
+          >
             <div className="relative h-48 sm:h-64">
               <Image
                 src={featuredDestination.image || "/destinations/main-bg.webp"}
@@ -196,14 +195,26 @@ export default function HomeSection() {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rekomendasi</h2>
-          <motion.button
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.95 }}
-            className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:text-blue-700 transition-colors"
-          >
-            View More
-            <ArrowRight className="h-4 w-4" />
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
+              title="Refresh destinations"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </motion.button>
+            <motion.button
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.95 }}
+              className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:text-blue-700 transition-colors"
+            >
+              View More
+              <ArrowRight className="h-4 w-4" />
+            </motion.button>
+          </div>
         </div>
 
         {loading ? (
@@ -217,7 +228,10 @@ export default function HomeSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
               >
-                <DestCardEnhanced item={dest} />
+                <DestCardEnhanced
+                  item={dest}
+                  onClick={() => setSelectedDestination(dest)}
+                />
               </motion.div>
             ))}
           </div>
@@ -229,7 +243,14 @@ export default function HomeSection() {
           </Card>
         )}
       </motion.div>
+
+      {selectedDestination && (
+        <DestinationDetailModal
+          destination={selectedDestination}
+          isOpen={!!selectedDestination}
+          onClose={() => setSelectedDestination(null)}
+        />
+      )}
     </div>
   );
 }
-

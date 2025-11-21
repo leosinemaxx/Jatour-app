@@ -14,6 +14,11 @@ export class CreateDestinationDto {
   @IsString()
   category: string;
 
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
+
   @IsString()
   description: string;
 

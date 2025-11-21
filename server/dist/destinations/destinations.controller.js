@@ -25,7 +25,12 @@ let DestinationsController = class DestinationsController {
         return this.destinationsService.create(createDestinationDto);
     }
     findAll(city, category, featured, search) {
-        return this.destinationsService.findAll({ city, category, featured, search });
+        return this.destinationsService.findAll({
+            city,
+            category,
+            featured,
+            search,
+        });
     }
     findOne(id) {
         return this.destinationsService.findOne(id);

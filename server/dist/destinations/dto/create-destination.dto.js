@@ -32,6 +32,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreateDestinationDto.prototype, "category", void 0);
 __decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateDestinationDto.prototype, "tags", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateDestinationDto.prototype, "description", void 0);

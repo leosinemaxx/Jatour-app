@@ -8,6 +8,7 @@ export interface Destination {
   city: string;
   province?: string;
   country?: string;
+  tags?: string[];
   description?: string;
   imageUrl?: string;
   images?: string[];

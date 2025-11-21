@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import type { Map } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fixLeafletIcon } from "@/lib/leaflet-utils";
 
@@ -14,10 +15,30 @@ interface MapComponentProps {
 
 const MapComponent = ({ center, zoom, name, address }: MapComponentProps) => {
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [instanceKey] = useState(() => `${Date.now()}-${Math.random()}`);
+  const mapRef = useRef<Map | null>(null);
+
+  // Unique key prevents Leaflet from trying to reattach to an existing container
+  const mapKey = useMemo(
+    () => `${instanceKey}-${center[0]}-${center[1]}-${zoom}`,
+    [instanceKey, center, zoom]
+  );
 
   useEffect(() => {
     fixLeafletIcon();
     setLeafletLoaded(true);
+
+    return () => {
+      if (mapRef.current) {
+        const container = mapRef.current.getContainer() as HTMLElement & { _leaflet_id?: string };
+        mapRef.current.remove();
+        if (container && container._leaflet_id) {
+          // React StrictMode reuses DOM nodes; make sure Leaflet forgets this one
+          container._leaflet_id = undefined;
+        }
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   if (!leafletLoaded) {
@@ -26,8 +47,13 @@ const MapComponent = ({ center, zoom, name, address }: MapComponentProps) => {
 
   return (
     <MapContainer
+      key={mapKey}
       center={center}
       zoom={zoom}
+      whenCreated={(mapInstance) => {
+        mapRef.current = mapInstance;
+      }}
+      destroyLeafletInstance={true}
       style={{ width: "100%", height: "100%", zIndex: 0 }}
       scrollWheelZoom={true}
       zoomControl={true}

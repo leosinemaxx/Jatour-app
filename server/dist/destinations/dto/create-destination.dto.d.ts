@@ -3,6 +3,7 @@ export declare class CreateDestinationDto {
     city: string;
     province?: string;
     category: string;
+    tags?: string[];
     description: string;
     image: string;
     images?: string[];

@@ -19,7 +19,12 @@ export class DestinationsController {
     @Query('featured') featured?: string,
     @Query('search') search?: string,
   ) {
-    return this.destinationsService.findAll({ city, category, featured, search });
+    return this.destinationsService.findAll({
+      city,
+      category,
+      featured,
+      search,
+    });
   }
 
   @Get(':id')
@@ -37,4 +42,3 @@ export class DestinationsController {
     return this.destinationsService.remove(id);
   }
 }
-

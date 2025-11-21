@@ -176,6 +176,16 @@ const DestCardEnhanced = memo(function DestCardEnhanced({ item, className, onCli
             </p>
           )}
 
+          {item.tags && item.tags.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {item.tags.slice(0, 4).map((tag) => (
+                <Badge key={tag} variant="outline" className="text-[10px] capitalize">
+                  #{tag.replace(/-/g, " ")}
+                </Badge>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-3">
             {item.priceRange && (
               <Badge className={priceColor}>

@@ -98,12 +98,16 @@ class ApiClient {
     category?: string;
     featured?: boolean;
     search?: string;
+    tags?: string[];
+    themes?: string[];
   }) {
     const params = new URLSearchParams();
     if (filters?.city) params.append('city', filters.city);
     if (filters?.category) params.append('category', filters.category);
     if (filters?.featured) params.append('featured', 'true');
     if (filters?.search) params.append('search', filters.search);
+    if (filters?.tags?.length) params.append('tags', filters.tags.join(','));
+    if (filters?.themes?.length) params.append('themes', filters.themes.join(','));
 
     return this.client.get(`/destinations?${params.toString()}`);
   }
@@ -140,12 +144,16 @@ class ApiClient {
     days?: number;
     interests?: string[];
     city?: string;
+    themes?: string[];
+    spots?: string[];
   }) {
     const params = new URLSearchParams();
     if (filters?.budget) params.append('budget', filters.budget.toString());
     if (filters?.days) params.append('days', filters.days.toString());
     if (filters?.interests) params.append('interests', filters.interests.join(','));
     if (filters?.city) params.append('city', filters.city);
+    if (filters?.themes?.length) params.append('themes', filters.themes.join(','));
+    if (filters?.spots?.length) params.append('spots', filters.spots.join(','));
 
     return this.client.get(`/planner/recommendations/${userId}?${params.toString()}`);
   }

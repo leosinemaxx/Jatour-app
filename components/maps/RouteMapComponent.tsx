@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import type { Map } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fixLeafletIcon, createCustomIcon } from "@/lib/leaflet-utils";
 
@@ -29,10 +30,27 @@ const RouteMapComponent = ({
   showRoute = true 
 }: RouteMapComponentProps) => {
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [instanceKey] = useState(() => `${Date.now()}-${Math.random()}`);
+  const mapRef = useRef<Map | null>(null);
+  const mapKey = useMemo(
+    () => `${instanceKey}-${center[0]}-${center[1]}-${zoom}-${from.lat}-${to.lat}`,
+    [instanceKey, center, zoom, from.lat, to.lat]
+  );
 
   useEffect(() => {
     fixLeafletIcon();
     setLeafletLoaded(true);
+
+    return () => {
+      if (mapRef.current) {
+        const container = mapRef.current.getContainer() as HTMLElement & { _leaflet_id?: string };
+        mapRef.current.remove();
+        if (container && container._leaflet_id) {
+          container._leaflet_id = undefined;
+        }
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   if (!leafletLoaded) {
@@ -46,8 +64,13 @@ const RouteMapComponent = ({
 
   return (
     <MapContainer
+      key={mapKey}
       center={center}
       zoom={zoom}
+      whenCreated={(mapInstance) => {
+        mapRef.current = mapInstance;
+      }}
+      destroyLeafletInstance={true}
       style={{ width: "100%", height: "100%", zIndex: 0 }}
       scrollWheelZoom={true}
       zoomControl={true}
