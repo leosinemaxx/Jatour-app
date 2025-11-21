@@ -1,4 +1,4 @@
-# 🧠 PANDUAN JURI: FITUR SMART ITINERARY
+# 🧠 PANDUAN PENGGUNA: FITUR SMART ITINERARY
 
 Selamat datang para juri yang terhormat! Panduan ini akan memandu Anda langkah demi langkah melalui fitur **Smart Itinerary**, menampilkan kemampuan perencanaan perjalanan berbasis AI dari JaTour. Rasakan perencanaan perjalanan dengan rekomendasi personalisasi dan optimisasi cerdas.
 
