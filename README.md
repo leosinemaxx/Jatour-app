@@ -2,7 +2,20 @@
 
 A comprehensive travel planning application for Jawa Timur, Indonesia, built with Next.js, NestJS, Prisma, and PostgreSQL.
 
+<<<<<<< HEAD
 ## ✨ Features
+=======
+# Team 
+
+- Nabilhisyam Y. Setyanto
+- Lanang Tegar Augurio Wardana 
+- M Alden Naryama 
+- Kayla Safiya Andhita 
+- Aisya Alhena Dinar 
+
+
+This is a **Next.js** project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), fully ready for **modern web-application development** with React 18+, TypeScript, and optimized performance.
+>>>>>>> defaff0bd3c8533cb6adcf248bf232dc5439f44c
 
 - 🗺️ **Interactive OpenStreetMap** - View destinations on interactive maps (completely free!)
 - 📍 **15+ Jawa Timur Destinations** - Comprehensive database with detailed information
