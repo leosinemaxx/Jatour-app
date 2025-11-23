@@ -265,7 +265,7 @@ const cuisineTypes = [
 const priceRanges = [
   { name: "Semua", value: "all" },
   { name: "Budget", value: "Budget", icon: Coffee },
-  { name: "Moderate", icon: UtensilsCrossed },
+  { name: "Moderate", value: "Moderate", icon: UtensilsCrossed },
   { name: "Premium", value: "Premium", icon: Wine }
 ];
 

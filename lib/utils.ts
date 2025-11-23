@@ -14,7 +14,7 @@ export const formatDate = (dateString: string, format: "short" | "long" | "full"
     short: { month: "short", day: "numeric" },
     long: { month: "long", day: "numeric", year: "numeric" },
     full: { weekday: "long", month: "long", day: "numeric", year: "numeric" },
-  }[format];
+  }[format] as Intl.DateTimeFormatOptions;
   
   return date.toLocaleDateString("id-ID", options);
 };

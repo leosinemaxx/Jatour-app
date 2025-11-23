@@ -434,6 +434,8 @@ export function generateMockFlightRoutes(
   if (fromAirport || toAirport) {
     const hubAirport = INDONESIAN_AIRPORTS["Surabaya Juanda"];
     const cityAirport = fromAirport || toAirport;
+    if (!cityAirport) return [];
+
     const cityName = fromAirport ? to : from;
     
     const distance1 = calculateDistance(

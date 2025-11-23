@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, BadRequestException, HttpException, HttpStatus, ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -69,6 +70,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   const port = process.env.PORT || 3001;
+  console.log(`Attempting to start NestJS server on port ${port}`);
   await app.listen(port);
   console.log(`🚀 Server is running on: http://localhost:${port}`);
 }

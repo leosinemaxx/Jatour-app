@@ -2,22 +2,38 @@
 
 import { Home, Compass, CalendarDays, Settings, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
 
 type TabKey = "home" | "explore" | "smart" | "plan" | "settings";
 
 interface NavbarDashProps {
-  activeTab: TabKey;
-  setActiveTab: (tab: TabKey) => void;
+  activeTab?: TabKey;
 }
 
-export default function NavbarDash({ activeTab, setActiveTab }: NavbarDashProps) {
-  const items: { key: TabKey; label: string; icon: React.ElementType }[] = [
-    { key: "home", label: "Home", icon: Home },
-    { key: "explore", label: "Explore", icon: Compass },
-    { key: "smart", label: "Smart", icon: Sparkles },
-    { key: "plan", label: "My Plan", icon: CalendarDays },
-    { key: "settings", label: "Settings", icon: Settings },
+export default function NavbarDash({ activeTab }: NavbarDashProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const items: { key: TabKey; label: string; icon: React.ElementType; route: string; hasDropdown?: boolean }[] = [
+    { key: "home", label: "Home", icon: Home, route: "/dashboard/home" },
+    { key: "explore", label: "Explore", icon: Compass, route: "/dashboard/explore" },
+    { key: "smart", label: "Smart", icon: Sparkles, route: "/dashboard/smart", hasDropdown: true },
+    { key: "plan", label: "My Plan", icon: CalendarDays, route: "/dashboard/plan", hasDropdown: true },
+    { key: "settings", label: "Settings", icon: Settings, route: "/dashboard/settings", hasDropdown: true },
   ];
+
+  const handleNavigation = (route: string, hasDropdown?: boolean) => {
+    if (hasDropdown) {
+      // For tabs with dropdown content, we'll navigate to the main tab
+      // The dropdown content can be accessed via other navigation methods
+      router.push(route);
+    } else {
+      // Navigate to the new route
+      router.push(route);
+    }
+    // Scroll to top for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg safe-area-inset-bottom">
@@ -30,9 +46,10 @@ export default function NavbarDash({ activeTab, setActiveTab }: NavbarDashProps)
             return (
               <motion.button
                 key={item.key}
-                onClick={() => setActiveTab(item.key)}
+                onClick={() => handleNavigation(item.route)}
                 className="flex flex-col items-center justify-center gap-1 flex-1 relative"
                 whileTap={{ scale: 0.9 }}
+                aria-label={item.label}
               >
                 {isActive && (
                   <motion.div

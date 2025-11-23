@@ -39,6 +39,7 @@ import {
 import { useSmartItinerary } from "@/lib/contexts/SmartItineraryContext";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useNotification } from "@/lib/components/NotificationProvider";
+import { apiClient } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,8 @@ export default function BudgetPage() {
   const [smartBudget, setSmartBudget] = useState<SmartBudgetRecommendation | null>(null);
   const [isCalculatingSmart, setIsCalculatingSmart] = useState(false);
   const [budgetInsights, setBudgetInsights] = useState<any>(null);
+  const [burnRateData, setBurnRateData] = useState<any>(null);
+  const [isLoadingBurnRate, setIsLoadingBurnRate] = useState(false);
 
   // ML-powered budget calculation
   const calculateSmartBudget = async () => {
@@ -202,6 +205,36 @@ export default function BudgetPage() {
     }
     await calculateBudget();
   };
+
+  // Fetch burn rate data
+  const fetchBurnRateData = async (budgetId?: string) => {
+    if (!user || !budgetId) return;
+
+    setIsLoadingBurnRate(true);
+    try {
+      const response = await apiClient.fetch(`/burn-rate?budgetId=${budgetId}&userId=${user.id}`);
+      setBurnRateData(response);
+    } catch (error) {
+      console.error('Error fetching burn rate data:', error);
+      addNotification({
+        title: 'Burn Rate Data Unavailable',
+        message: 'Unable to load burn rate information at this time.',
+        type: 'warning'
+      });
+    } finally {
+      setIsLoadingBurnRate(false);
+    }
+  };
+
+  // Auto-fetch burn rate data when budget is calculated
+  useEffect(() => {
+    if (budgetBreakdown && user) {
+      // For now, we'll use the first available budget ID
+      // In a real implementation, you'd track which budget this is for
+      const budgetId = 'budget-id-placeholder'; // This should come from your budget data
+      fetchBurnRateData(budgetId);
+    }
+  }, [budgetBreakdown, user]);
 
   const getRecommendationColor = (category: string) => {
     const colors = {
@@ -671,6 +704,115 @@ export default function BudgetPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Burn Rate Analysis */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card className="bg-white shadow-xl border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <TrendingUp className="h-6 w-6 text-blue-600" />
+                  Burn Rate Analysis
+                  <Badge className="ml-auto bg-blue-100 text-blue-700">
+                    Real-time
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingBurnRate ? (
+                  <div className="flex items-center justify-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600">Analyzing spending patterns...</span>
+                  </div>
+                ) : burnRateData ? (
+                  <div className="space-y-6">
+                    {/* Burn Rate Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold text-blue-900">Daily Burn Rate</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">
+                          IDR {burnRateData.dailyAverage?.toLocaleString('id-ID') || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-900">Projected Rate</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">
+                          IDR {burnRateData.projectedBurnRate?.toLocaleString('id-ID') || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-semibold text-purple-900">Days Remaining</span>
+                        </div>
+                        <div className="text-2xl font-bold text-purple-900">
+                          {burnRateData.remainingDays || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Risk Level */}
+                    {burnRateData.riskLevel && (
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-2xl">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">Budget Risk Level</h4>
+                            <p className="text-sm text-gray-600">
+                              Based on your current spending velocity and remaining budget
+                            </p>
+                          </div>
+                          <Badge
+                            className={`text-white ${
+                              burnRateData.riskLevel === 'low' ? 'bg-green-500' :
+                              burnRateData.riskLevel === 'medium' ? 'bg-yellow-500' :
+                              burnRateData.riskLevel === 'high' ? 'bg-orange-500' :
+                              'bg-red-500'
+                            }`}
+                          >
+                            {burnRateData.riskLevel.toUpperCase()}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {burnRateData.recommendations && burnRateData.recommendations.length > 0 && (
+                      <div className="bg-blue-50 p-4 rounded-2xl">
+                        <h4 className="font-semibold text-blue-900 mb-3">AI Recommendations</h4>
+                        <ul className="space-y-2">
+                          {burnRateData.recommendations.slice(0, 3).map((rec: string, index: number) => (
+                            <li key={index} className="text-sm text-blue-800 flex items-start gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-semibold mb-2">Burn Rate Analysis</p>
+                    <p className="text-sm">
+                      Generate a budget breakdown to see real-time burn rate analysis and spending insights.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Traditional Budget Overview (Legacy) */}
           <motion.div

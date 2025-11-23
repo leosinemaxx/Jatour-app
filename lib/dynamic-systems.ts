@@ -128,8 +128,18 @@ export const useDynamicThemes = () => {
 
     // Generate themes from actual database categories
     const dynamicThemes = categories.map((category, index) => {
+      if (!category) {
+        return {
+          id: 'unknown',
+          title: 'Unknown',
+          description: 'Kategori tidak diketahui',
+          accent: 'from-gray-100 to-gray-200',
+          icon: 'TreePine'
+        };
+      }
+
       const mapping = themeMapping[category] || {
-        title: category.split(' ').map(word => 
+        title: category.split(' ').map(word =>
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' '),
         description: `Kategori ${category}`,
@@ -362,8 +372,8 @@ export const useDynamicStats = () => {
 
     const cities = new Set(destinations.map(d => d.city));
     const categories = new Set(destinations.map(d => d.category));
-    const ratings = destinations.map(d => d.rating).filter(r => r && r > 0);
-    const averageRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+    const ratings = destinations.map(d => d.rating).filter((r): r is number => r != null && r > 0);
+    const averageRating = ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : 0;
     const featuredCount = destinations.filter(d => d.featured).length;
 
     return {

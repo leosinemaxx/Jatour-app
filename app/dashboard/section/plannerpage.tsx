@@ -61,13 +61,13 @@ export default function PlannerPage() {
 
     setLoading(true);
     try {
-      const data = await apiClient.getRecommendations(user.id, {
+      const response = await apiClient.getRecommendations(user.id, {
         budget: filters.budget ? parseFloat(filters.budget) : undefined,
         days: filters.days ? parseInt(filters.days) : undefined,
         interests: filters.interests.length > 0 ? filters.interests : undefined,
         city: filters.city || undefined,
       });
-      setRecommendations(data || []);
+      setRecommendations(response.data || []);
     } catch (error) {
       console.error("Failed to load recommendations:", error);
     } finally {
@@ -185,7 +185,20 @@ export default function PlannerPage() {
           </Card>
 
           {loading ? (
-            <LoadingSkeleton count={3} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <CardHeader>
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : recommendations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recommendations.map((dest) => (

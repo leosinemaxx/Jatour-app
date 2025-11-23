@@ -2,9 +2,12 @@
   "name": "jatour-app",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "ts-node -r dotenv/config prisma/seed.ts dotenv_config_path=.env.local"
+  },
   "scripts": {
     "dev": "next dev",
-    "dev:server": "cd server && nest start --watch",
+    "dev:server": "cd server && ts-node -r tsconfig-paths/register src/main.ts",
     "build": "next build",
     "build:server": "nest build",
     "start": "next start",
@@ -20,6 +23,9 @@
     "prisma:reset-demo": "cross-env ts-node -r dotenv/config prisma/reset-demo-password.ts dotenv_config_path=.env.local"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
+    "@nestjs/platform-socket.io": "^11.1.9",
+    "@nestjs/websockets": "^11.1.9",
     "@prisma/client": "^5.20.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -30,6 +36,8 @@
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.2",
     "axios": "^1.7.9",
+    "cache-manager": "^7.2.5",
+    "cache-manager-redis-yet": "^5.1.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "critters": "^0.0.16",
@@ -39,9 +47,13 @@
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-icons": "^5.5.0",
     "react-leaflet": "^4.2.1",
+    "redis": "^5.10.0",
+    "socket.io-client": "^4.8.1",
     "swr": "^2.3.6",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",

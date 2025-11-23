@@ -5,13 +5,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { isValidEmail } from "@/lib/utils";
+import { FaFacebook, FaGoogle, FaMicrosoft } from "react-icons/fa";
 
 export default function SignIn() {
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -42,52 +42,48 @@ export default function SignIn() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen relative overflow-hidden w-full h-full">
+    <main className="flex flex-col items-center justify-center min-h-screen relative overflow-hidden w-full">
       {/* Background Image */}
       <div 
-        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 w-full h-full"
         style={{
           backgroundImage: "url('/destinations/Bali-Pantai.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed",
         }}
       />
       
-      {/* Animated background circles */}
-      <div className="fixed top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse z-0"></div>
-      <div className="fixed bottom-20 right-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-pulse delay-1000 z-0"></div>
+      {/* Dark Overlay */}
+      <div className="fixed inset-0 w-full h-full bg-black/20"></div>
 
-      {/* Dark Overlay to reduce brightness - expanded to cover entire page */}
-      <div className="fixed inset-0 w-full h-full bg-black/40 z-0"></div>
+      {/* Location Badge - Top Left */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        className="fixed top-8 left-8 z-10"
+      >
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <h3 className="text-lg font-semibold text-gray-800">Pantai Klayar</h3>
+          <p className="text-sm text-gray-600">Pacitan</p>
+        </div>
+      </motion.div>
 
       {/* Sign In Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 bg-white/20 backdrop-blur-lg rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 text-white shadow-lg my-8"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="relative z-10 bg-white rounded-3xl p-8 w-full max-w-md mx-4 shadow-2xl"
       >
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-center mb-6"
-        >
-          <h2 className="text-2xl font-semibold mb-2">Welcome Back</h2>
-          <p className="text-sm opacity-90">Sign in to continue your journey</p>
-        </motion.div>
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Sign In</h2>
+        </div>
 
         {/* Form */}
-        <motion.form
-          onSubmit={handleSignIn}
-          className="flex flex-col gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-        >
+        <form onSubmit={handleSignIn} className="flex flex-col gap-4 mb-6">
           {/* Email Input */}
           <input
             type="email"
@@ -96,45 +92,26 @@ export default function SignIn() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSubmitting}
             required
-            className="bg-white/30 rounded-md px-3 py-2 focus:outline-none placeholder-white text-white"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
 
           {/* Password Input */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isSubmitting}
-              required
-              className="w-full bg-white/30 rounded-md px-3 py-2 pr-10 focus:outline-none placeholder-white text-white"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-              disabled={isSubmitting}
-            >
-              {showPassword ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              )}
-            </button>
-          </div>
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isSubmitting}
+            required
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          />
 
           {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-300 text-sm text-center -mt-2"
+              className="text-red-500 text-sm text-center bg-red-50 py-2 rounded-lg"
             >
               {error}
             </motion.div>
@@ -144,7 +121,7 @@ export default function SignIn() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-white text-black rounded-full py-2 mt-2 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-gray-800 text-white rounded-lg py-3 font-medium hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
           >
             {isSubmitting ? (
               <>
@@ -155,30 +132,75 @@ export default function SignIn() {
                 Signing In...
               </>
             ) : (
-              "Sign In"
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Log In
+              </>
             )}
           </button>
-        </motion.form>
+        </form>
 
-        {/* Footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="mt-4 text-center"
-        >
-          <p className="text-xs">
-            Don't have an account?{" "}
+        {/* Sign Up Link */}
+        <div className="text-center mb-6">
+          <p className="text-sm text-gray-600">
+            Not registered yet?{" "}
             <Link
               href="/signup"
-              className="underline hover:text-white transition-colors"
+              className="text-blue-600 font-medium hover:text-blue-700 transition-colors"
             >
               Sign up here
             </Link>
           </p>
-        </motion.div>
-      </motion.div>
+        </div>
 
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-gray-500">Sign In with Existing Account</span>
+          </div>
+        </div>
+
+        {/* Social Login Buttons */}
+        <div className="flex flex-col gap-3">
+          {/* Facebook */}
+          <button
+            type="button"
+            onClick={() => alert("Facebook login coming soon!")}
+            disabled={isSubmitting}
+            className="w-full bg-white border border-gray-200 rounded-lg py-3 font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          >
+            <FaFacebook className="w-5 h-5 text-blue-600" />
+            Log In with FaceBook
+          </button>
+
+          {/* Outlook */}
+          <button
+            type="button"
+            onClick={() => alert("Outlook login coming soon!")}
+            disabled={isSubmitting}
+            className="w-full bg-white border border-gray-200 rounded-lg py-3 font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          >
+            <FaMicrosoft className="w-5 h-5 text-blue-500" />
+            Log In with Outlook
+          </button>
+
+          {/* Google */}
+          <button
+            type="button"
+            onClick={() => alert("Google login coming soon!")}
+            disabled={isSubmitting}
+            className="w-full bg-white border border-gray-200 rounded-lg py-3 font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          >
+            <FaGoogle className="w-5 h-5 text-red-500" />
+            Log In with Google
+          </button>
+        </div>
+      </motion.div>
     </main>
   );
 }

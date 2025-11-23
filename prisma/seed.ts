@@ -2199,9 +2199,127 @@ async function main() {
   console.log(`✅ Created ${createdReviews.length} reviews`);
 
   // Create accommodations
-  console.log('🏨 Creating accommodations...');
+  console.log('🏨 Creating comprehensive accommodations database...');
   const accommodations = [
-    // LUXURY HOTELS
+    // LUXURY HOTELS - JAKARTA
+    {
+      name: 'The Grand Hyatt Jakarta',
+      city: 'Jakarta',
+      province: 'DKI Jakarta',
+      type: 'hotel',
+      category: 'luxury',
+      description: 'Luxury hotel di jantung kota Jakarta dengan fasilitas premium dan pelayanan internasional.',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop'
+      ]),
+      rating: 4.8,
+      priceRange: 'IDR 2,500,000',
+      coordinates: JSON.stringify({ lat: -6.2088, lng: 106.8456 }),
+      address: 'Jl. M.H. Thamrin No. 1, Jakarta Pusat',
+      phone: '+62 21-23583000',
+      email: 'jakarta@hyatt.com',
+      website: 'https://hyatt.com/jakarta',
+      amenities: JSON.stringify({ wifi: true, ac: true, pool: true, spa: true, gym: true, parking: true, restaurant: true, bar: true, business_center: true }),
+      capacity: 4,
+      breakfast: true,
+      checkInTime: '15:00',
+      checkOutTime: '12:00',
+      cancellationPolicy: 'Free cancellation up to 48 hours before check-in',
+      totalRooms: 350,
+      availability: JSON.stringify({ availableRooms: 280, bookedRooms: 70 }),
+      bookingUrl: 'https://hyatt.com/jakarta-booking'
+    },
+    {
+      name: 'The Ritz-Carlton Jakarta',
+      city: 'Jakarta',
+      province: 'DKI Jakarta',
+      type: 'hotel',
+      category: 'luxury',
+      description: 'Ultra-luxury hotel dengan pelayanan mewah dan lokasi premium di kawasan SCBD.',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop'
+      ]),
+      rating: 4.9,
+      priceRange: 'IDR 3,200,000',
+      coordinates: JSON.stringify({ lat: -6.2240, lng: 106.8090 }),
+      address: 'Jl. H.R. Rasuna Said, Jakarta Selatan',
+      phone: '+62 21-25518888',
+      email: 'jakarta@ritzcarlton.com',
+      website: 'https://ritzcarlton.com/jakarta',
+      amenities: JSON.stringify({ wifi: true, ac: true, pool: true, spa: true, gym: true, parking: true, restaurant: true, bar: true, concierge: true }),
+      capacity: 4,
+      breakfast: true,
+      checkInTime: '15:00',
+      checkOutTime: '12:00',
+      cancellationPolicy: 'Free cancellation up to 72 hours before check-in',
+      totalRooms: 210,
+      availability: JSON.stringify({ availableRooms: 165, bookedRooms: 45 }),
+      bookingUrl: 'https://ritzcarlton.com/jakarta-booking'
+    },
+
+    // LUXURY HOTELS - BALI
+    {
+      name: 'Four Seasons Resort Bali at Jimbaran Bay',
+      city: 'Bali',
+      province: 'Bali',
+      type: 'resort',
+      category: 'luxury',
+      description: 'Resort mewah dengan vila-vila pribadi dan pemandangan teluk Jimbaran yang spektakuler.',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop'
+      ]),
+      rating: 4.9,
+      priceRange: 'IDR 4,500,000',
+      coordinates: JSON.stringify({ lat: -8.7415, lng: 115.1620 }),
+      address: 'Jimbaran, Kuta Selatan, Badung, Bali',
+      phone: '+62 361-730888',
+      email: 'bali@fourseasons.com',
+      website: 'https://fourseasons.com/bali',
+      amenities: JSON.stringify({ wifi: true, ac: true, pool: true, spa: true, gym: true, parking: true, restaurant: true, bar: true, private_pool: true, beach_front: true }),
+      capacity: 4,
+      breakfast: true,
+      checkInTime: '14:00',
+      checkOutTime: '12:00',
+      cancellationPolicy: 'Free cancellation up to 72 hours before check-in',
+      totalRooms: 147,
+      availability: JSON.stringify({ availableRooms: 110, bookedRooms: 37 }),
+      bookingUrl: 'https://fourseasons.com/bali-booking'
+    },
+    {
+      name: 'Ayana Resort and Spa Bali',
+      city: 'Bali',
+      province: 'Bali',
+      type: 'resort',
+      category: 'luxury',
+      description: 'Resort luxury dengan infinity pool ikonik dan spa terbesar di Bali.',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop'
+      ]),
+      rating: 4.7,
+      priceRange: 'IDR 3,800,000',
+      coordinates: JSON.stringify({ lat: -8.8264, lng: 115.0920 }),
+      address: 'Jl. Karang Mas Sejahtera No. 88, Jimbaran, Bali',
+      phone: '+62 361-720000',
+      email: 'bali@ayana.com',
+      website: 'https://ayanabali.com',
+      amenities: JSON.stringify({ wifi: true, ac: true, pool: true, spa: true, gym: true, parking: true, restaurant: true, bar: true, kids_club: true }),
+      capacity: 4,
+      breakfast: true,
+      checkInTime: '15:00',
+      checkOutTime: '12:00',
+      cancellationPolicy: 'Free cancellation up to 48 hours before check-in',
+      totalRooms: 381,
+      availability: JSON.stringify({ availableRooms: 295, bookedRooms: 86 }),
+      bookingUrl: 'https://ayanabali.com/booking'
+    },
+
+    // LUXURY HOTELS - BATA
     {
       name: 'Golden Tulip Holland Resort Batu',
       city: 'Batu',
@@ -2215,7 +2333,7 @@ async function main() {
         'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop'
       ]),
       rating: 4.7,
-      priceRange: 'luxury',
+      priceRange: 'IDR 1,200,000',
       coordinates: JSON.stringify({ lat: -7.8833, lng: 112.5167 }),
       address: 'Jl. Oro-Oro Ombo No. 278, Batu, Jawa Timur',
       phone: '+62 341-598888',
@@ -2229,7 +2347,7 @@ async function main() {
       cancellationPolicy: 'Free cancellation up to 24 hours before check-in',
       totalRooms: 120,
       availability: JSON.stringify({ availableRooms: 85, bookedRooms: 35 }),
-      bookingUrl: 'https://booking.com/hotel/id/golden-tulip.html'
+      bookingUrl: 'https://goldentulip-batu.com/booking'
     },
     {
       name: 'Hotel Majapahit Surabaya',

@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Tag, 
-  Percent, 
-  Clock, 
-  MapPin, 
-  Plane, 
-  Hotel, 
+import {
+  Tag,
+  Percent,
+  Clock,
+  MapPin,
+  Plane,
+  Hotel,
   UtensilsCrossed,
   Star,
   Users,
@@ -20,9 +20,13 @@ import {
   Gift,
   Zap,
   Heart,
-  Bookmark
+  Bookmark,
+  Target,
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 import Image from "next/image";
+import { useNotification } from "@/lib/components/NotificationProvider";
 
 interface Promotion {
   id: string;
@@ -40,6 +44,27 @@ interface Promotion {
   featured?: boolean;
   limited?: boolean;
   flash?: boolean;
+}
+
+interface BudgetMatchedDeal {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  title: string;
+  description: string;
+  category: 'dining' | 'accommodation' | 'transportation' | 'activities' | 'shopping';
+  originalPrice: number;
+  discountedPrice: number;
+  discountPercentage: number;
+  location: string;
+  validUntil: Date;
+  imageUrl?: string;
+  rating?: number;
+  reviews?: number;
+  tags: string[];
+  relevanceScore: number;
+  budgetAlignmentScore: number;
+  reasoning: string[];
 }
 
 const promotions: Promotion[] = [
@@ -146,18 +171,56 @@ const categories = [
 export default function PromoPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [bookmarked, setBookmarked] = useState<string[]>([]);
+  const [budgetDeals, setBudgetDeals] = useState<BudgetMatchedDeal[]>([]);
+  const [isLoadingDeals, setIsLoadingDeals] = useState(false);
+  const [showBudgetDeals, setShowBudgetDeals] = useState(true);
+  const { addNotification } = useNotification();
 
   const filteredPromotions = selectedCategory === "all" 
     ? promotions 
     : promotions.filter(promo => promo.category === selectedCategory);
 
   const toggleBookmark = (id: string) => {
-    setBookmarked(prev => 
-      prev.includes(id) 
+    setBookmarked(prev =>
+      prev.includes(id)
         ? prev.filter(b => b !== id)
         : [...prev, id]
     );
   };
+
+  const fetchBudgetDeals = async () => {
+    setIsLoadingDeals(true);
+    try {
+      // Mock user ID - in real app, get from auth context
+      const userId = 'demo-user-id';
+
+      const response = await fetch(`/api/budget-deals?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.topDeals) {
+          setBudgetDeals(data.topDeals);
+
+          // Show notification about found deals
+          if (data.topDeals.length > 0) {
+            addNotification({
+              type: 'info',
+              title: '💰 Budget-Matched Deals Found!',
+              message: `Found ${data.topDeals.length} deals that match your budget constraints.`,
+              duration: 5000,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching budget deals:', error);
+    } finally {
+      setIsLoadingDeals(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBudgetDeals();
+  }, []);
 
   const calculateDaysLeft = (validUntil: string) => {
     const today = new Date();
@@ -187,6 +250,19 @@ export default function PromoPage() {
               <p className="text-orange-100 text-sm sm:text-base">
                 Dapatkan diskon hingga 40% untuk destinasi wisata terbaik di Jawa Timur
               </p>
+              {!showBudgetDeals && (
+                <Button
+                  onClick={() => {
+                    setShowBudgetDeals(true);
+                    fetchBudgetDeals();
+                  }}
+                  className="mt-3 bg-white/20 hover:bg-white/30 text-white border border-white/30"
+                  size="sm"
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Lihat Deals Budget Saya
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -218,6 +294,116 @@ export default function PromoPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Budget-Matched Deals Section */}
+      {showBudgetDeals && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500 rounded-full">
+                    <Target className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-green-800">🎯 Deals Sesuai Budget Anda</h3>
+                    <p className="text-sm text-green-700">Promo yang dipersonalisasi berdasarkan budget perjalanan Anda</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBudgetDeals(false)}
+                  className="text-green-700 border-green-300 hover:bg-green-100"
+                >
+                  Tutup
+                </Button>
+              </div>
+
+              {isLoadingDeals ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
+                  <p className="text-green-700">Mencari deals terbaik untuk Anda...</p>
+                </div>
+              ) : budgetDeals.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {budgetDeals.slice(0, 6).map((deal, index) => (
+                    <motion.div
+                      key={deal.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
+                      <Card className="border border-green-200 hover:border-green-400 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-green-600" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge className="bg-green-500 text-white text-xs">
+                                  {Math.round(deal.relevanceScore)}% Match
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {deal.category}
+                                </Badge>
+                              </div>
+                              <h4 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+                                {deal.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                                {deal.merchantName} • {deal.location}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm">
+                                  <span className="line-through text-gray-500">
+                                    IDR {deal.originalPrice.toLocaleString('id-ID')}
+                                  </span>
+                                  <span className="font-bold text-green-600 ml-2">
+                                    IDR {deal.discountedPrice.toLocaleString('id-ID')}
+                                  </span>
+                                </div>
+                                <Badge className="bg-red-500 text-white">
+                                  -{deal.discountPercentage}%
+                                </Badge>
+                              </div>
+                              {deal.reasoning.length > 0 && (
+                                <p className="text-xs text-green-700 mt-2 italic">
+                                  💡 {deal.reasoning[0]}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">Belum ada deals yang sesuai dengan budget Anda saat ini.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchBudgetDeals}
+                    className="mt-3"
+                  >
+                    Cari Ulang
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Category Filter */}
       <motion.div

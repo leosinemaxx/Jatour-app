@@ -50,10 +50,11 @@ const MapComponent = ({ center, zoom, name, address }: MapComponentProps) => {
       key={mapKey}
       center={center}
       zoom={zoom}
-      whenCreated={(mapInstance) => {
-        mapRef.current = mapInstance;
+      ref={(mapInstance) => {
+        if (mapInstance) {
+          mapRef.current = mapInstance;
+        }
       }}
-      destroyLeafletInstance={true}
       style={{ width: "100%", height: "100%", zIndex: 0 }}
       scrollWheelZoom={true}
       zoomControl={true}

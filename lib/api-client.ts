@@ -76,19 +76,19 @@ class ApiClient {
   }
 
   // Users
-  async register(data: { email: string; password: string; fullName: string; phone?: string }) {
+  async register(data: { email: string; password: string; fullName: string; phone?: string }): Promise<any> {
     return this.client.post('/users/register', data);
   }
 
-  async login(data: { email: string; password: string }) {
+  async login(data: { email: string; password: string }): Promise<any> {
     return this.client.post('/users/login', data);
   }
 
-  async getUser(id: string) {
+  async getUser(id: string): Promise<User> {
     return this.client.get(`/users/${id}`);
   }
 
-  async updateUser(id: string, data: any) {
+  async updateUser(id: string, data: any): Promise<any> {
     return this.client.patch(`/users/${id}`, data);
   }
 
@@ -100,7 +100,7 @@ class ApiClient {
     search?: string;
     tags?: string[];
     themes?: string[];
-  }) {
+  }): Promise<Destination[]> {
     const params = new URLSearchParams();
     if (filters?.city) params.append('city', filters.city);
     if (filters?.category) params.append('category', filters.category);
@@ -112,29 +112,29 @@ class ApiClient {
     return this.client.get(`/destinations?${params.toString()}`);
   }
 
-  async getDestination(id: string) {
+  async getDestination(id: string): Promise<Destination> {
     return this.client.get(`/destinations/${id}`);
   }
 
   // Itineraries
-  async getItineraries(userId?: string) {
+  async getItineraries(userId?: string): Promise<Itinerary[]> {
     const url = userId ? `/itineraries?userId=${userId}` : '/itineraries';
     return this.client.get(url);
   }
 
-  async getItinerary(id: string) {
+  async getItinerary(id: string): Promise<Itinerary> {
     return this.client.get(`/itineraries/${id}`);
   }
 
-  async createItinerary(data: any) {
+  async createItinerary(data: any): Promise<Itinerary> {
     return this.client.post('/itineraries', data);
   }
 
-  async updateItinerary(id: string, data: any) {
+  async updateItinerary(id: string, data: any): Promise<Itinerary> {
     return this.client.patch(`/itineraries/${id}`, data);
   }
 
-  async deleteItinerary(id: string) {
+  async deleteItinerary(id: string): Promise<void> {
     return this.client.delete(`/itineraries/${id}`);
   }
 
@@ -146,7 +146,7 @@ class ApiClient {
     city?: string;
     themes?: string[];
     spots?: string[];
-  }) {
+  }): Promise<any> {
     const params = new URLSearchParams();
     if (filters?.budget) params.append('budget', filters.budget.toString());
     if (filters?.days) params.append('days', filters.days.toString());
@@ -158,7 +158,7 @@ class ApiClient {
     return this.client.get(`/planner/recommendations/${userId}?${params.toString()}`);
   }
 
-  async calculateRoute(destinationIds: string[], startLocation?: { lat: number; lng: number }) {
+  async calculateRoute(destinationIds: string[], startLocation?: { lat: number; lng: number }): Promise<any> {
     const params = new URLSearchParams();
     params.append('destinations', destinationIds.join(','));
     if (startLocation) {
@@ -170,19 +170,19 @@ class ApiClient {
   }
 
   // Budget
-  async calculateBudgetBreakdown(itineraryId: string) {
+  async calculateBudgetBreakdown(itineraryId: string): Promise<any> {
     return this.client.get(`/budget/calculate/${itineraryId}`);
   }
 
-  async getBudgets(userId: string) {
+  async getBudgets(userId: string): Promise<any> {
     return this.client.get(`/budget?userId=${userId}`);
   }
 
-  async createBudget(data: any) {
+  async createBudget(data: any): Promise<any> {
     return this.client.post('/budget', data);
   }
 
-  async updateBudget(id: string, data: any) {
+  async updateBudget(id: string, data: any): Promise<any> {
     return this.client.patch(`/budget/${id}`, data);
   }
 
@@ -281,15 +281,15 @@ class ApiClient {
   }
 
   async updateWalletBalance(walletId: string, amount: number): Promise<Wallet> {
-    const wallet = await this.client.get<Wallet>(`/wallet/${walletId}`);
+    const wallet = await this.client.get(`/wallet/${walletId}`);
     return this.client.patch(`/wallet/${walletId}`, {
-      balance: wallet.balance + amount
+      balance: (wallet as any).balance + amount
     });
   }
 
   async addCardToWallet(walletId: string, cardData: PaymentCard): Promise<Wallet> {
-    const wallet = await this.client.get<Wallet>(`/wallet/${walletId}`);
-    const cards = [...(wallet.cards || []), cardData];
+    const wallet = await this.client.get(`/wallet/${walletId}`);
+    const cards = [...((wallet as any).cards || []), cardData];
     return this.client.patch(`/wallet/${walletId}`, { cards });
   }
 
@@ -348,13 +348,13 @@ class ApiClient {
 
   // Recommendation API methods
   async getRecommendationsByUserId(userId: string): Promise<Recommendation[]> {
-    const recommendations = await this.client.get<Recommendation[]>(
+    const recommendations = await this.client.get(
       `/recommendations?userId=${userId}&_sort=priority&_order=asc`
     );
-    
+
     // Fetch full destination details for each recommendation
     const withDestinations = await Promise.all(
-      recommendations.map(async (rec) => {
+      (recommendations as unknown as any[]).map(async (rec) => {
         try {
           const destination = await this.getDestination(rec.destinationId);
           return { ...rec, destination };
@@ -363,7 +363,7 @@ class ApiClient {
         }
       })
     );
-    
+
     return withDestinations;
   }
 

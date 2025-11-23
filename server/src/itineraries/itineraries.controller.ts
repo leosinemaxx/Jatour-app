@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { ItinerariesService } from './itineraries.service';
 import { CreateItineraryDto } from './dto/create-itinerary.dto';
 import { UpdateItineraryDto } from './dto/update-itinerary.dto';
+import { BudgetOptimizationRequest } from '../../../lib/ml/budget-aligned-itinerary-engine';
 
 @Controller('itineraries')
 export class ItinerariesController {
@@ -30,6 +31,11 @@ export class ItinerariesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.itinerariesService.remove(id);
+  }
+
+  @Post('optimize-budget')
+  optimizeBudget(@Body() budgetOptimizationRequest: BudgetOptimizationRequest) {
+    return this.itinerariesService.optimizeBudget(budgetOptimizationRequest);
   }
 }
 

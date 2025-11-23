@@ -27,7 +27,8 @@ import {
   CheckCircle,
   Users,
   Share2,
-  Download
+  Download,
+  Trash2
 } from "lucide-react";
 import { useSmartItinerary } from "@/lib/contexts/SmartItineraryContext";
 import { useDestinations } from "@/lib/hooks/useDestinations";
@@ -59,9 +60,10 @@ interface SmartItinerary {
 
 interface EnhancedItineraryViewerProps {
   itineraries: SmartItinerary[];
+  onDeleteItinerary?: (id: string) => void;
 }
 
-export default function EnhancedItineraryViewer({ itineraries }: EnhancedItineraryViewerProps) {
+export default function EnhancedItineraryViewer({ itineraries, onDeleteItinerary }: EnhancedItineraryViewerProps) {
   const [selectedItinerary, setSelectedItinerary] = useState<string | null>(null);
   const [expandedDays, setExpandedDays] = useState<number[]>([]);
 
@@ -294,6 +296,20 @@ export default function EnhancedItineraryViewer({ itineraries }: EnhancedItinera
                         <Button variant="outline" className="flex-1">
                           <Download className="h-4 w-4 mr-2" />
                           Export
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 text-red-600 hover:text-white hover:bg-red-600 border-red-300"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete "${itinerary.title}"? This action cannot be undone.`)) {
+                              if (onDeleteItinerary) {
+                                onDeleteItinerary(itinerary.id);
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
                         </Button>
                       </div>
                     </div>

@@ -45,11 +45,11 @@ async function createUser() {
         fullName,
         phone,
         profilePicture: '/avatars/default.jpg',
-        preferences: {
+        preferences: JSON.stringify({
           language: 'id',
           notifications: true,
           theme: 'light',
-        },
+        }),
       },
       select: {
         id: true,

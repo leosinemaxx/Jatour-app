@@ -17,7 +17,7 @@ model User {
   fullName      String
   phone         String?
   profilePicture String?
-  preferences   String?   // JSON: { language, notifications, theme }
+  preferences   Json?     // JSON: { language, notifications, theme }
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -31,6 +31,9 @@ model User {
   sentMessages   Message[] @relation("MessageSender")
   receivedMessages Message[] @relation("MessageReceiver")
   notifications Notification[]
+  expenses      Expense[]
+  transactions  Transaction[]
+  alertInstances AlertInstance[]
 
   @@map("users")
 }
@@ -85,6 +88,7 @@ model Itinerary {
   destinations  ItineraryDestination[]
   days          ItineraryDay[]
   budgetPlan    Budget?
+  expenses      Expense[]
 
   @@index([userId])
   @@index([status])
@@ -136,6 +140,7 @@ model Budget {
 
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   itinerary     Itinerary? @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  expenses      Expense[]
 
   @@index([userId])
   @@map("budgets")
@@ -419,4 +424,132 @@ model ItineraryBlock {
   @@index([order])
   @@index([startTime])
   @@map("itinerary_blocks")
+}
+
+// Expense Tracking System
+model Expense {
+  id            String    @id @default(cuid())
+  userId        String
+  budgetId      String?   // Link to budget if expense is part of a planned budget
+  itineraryId   String?   // Link to itinerary if expense is related to a trip
+
+  amount        Float     // Expense amount in IDR
+  currency      String    @default("IDR")
+  category      String    // food, transport, accommodation, activities, shopping, etc.
+  subcategory   String?   // More specific categorization
+  description   String
+  date          DateTime  @default(now())
+  location      String?   // Where the expense occurred
+  paymentMethod String    // cash, debit_card, credit_card, e_wallet, transfer, qris, etc.
+  merchant      String?   // Merchant/store name
+  tags          String?   // JSON array of tags: ["business", "personal", "emergency"]
+
+  // ML categorization
+  mlCategory    String?   // ML-predicted category
+  mlConfidence  Float?    // ML confidence score (0-1)
+  isManuallyCategorized Boolean @default(false)
+
+  // Receipt and verification
+  receiptImage  String?   // URL to receipt image
+  transactionId String?   @unique // Link to external transaction if synced
+  isVerified    Boolean   @default(false)
+
+  // Recurring expenses
+  isRecurring   Boolean   @default(false)
+  recurringId   String?   // ID for recurring expense group
+  recurringFrequency String? // daily, weekly, monthly, yearly
+
+  // Privacy and compliance
+  isEncrypted   Boolean   @default(false)
+  consentGiven  Boolean   @default(true)
+  dataRetention DateTime? // When data should be deleted
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget        Budget?   @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  itinerary     Itinerary? @relation(fields: [itineraryId], references: [id], onDelete: SetNull)
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([userId])
+  @@index([budgetId])
+  @@index([itineraryId])
+  @@index([category])
+  @@index([date])
+  @@index([paymentMethod])
+  @@index([isRecurring])
+  @@index([transactionId])
+  @@map("expenses")
+}
+
+model Transaction {
+  id            String    @id @default(cuid())
+  userId        String
+  source        String    // qris, debit_card, credit_card, e_wallet, bank_transfer, etc.
+  externalId    String?   // External transaction ID from payment provider
+  amount        Float     // Transaction amount
+  currency      String    @default("IDR")
+  date          DateTime
+  merchant      String?   // Merchant name
+  location      String?   // Transaction location
+  category      String?   // Auto-detected category
+  description   String?   // Transaction description
+  status        String    @default("completed") // pending, completed, failed, cancelled
+
+  // ML analysis
+  mlCategory    String?   // ML-predicted category
+  mlConfidence  Float?    // ML confidence score
+  anomalyScore  Float?    // Anomaly detection score (0-1, higher = more anomalous)
+
+  // Privacy compliance
+  isEncrypted   Boolean   @default(false)
+  consentGiven  Boolean   @default(true)
+  dataRetention DateTime?
+
+  // Sync metadata
+  lastSyncedAt  DateTime?
+  syncSource    String?   // Which service synced this transaction
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expense       Expense?  // If this transaction was converted to an expense
+
+  @@unique([userId, externalId, source]) // Prevent duplicate syncs
+  @@index([userId])
+  @@index([source])
+  @@index([date])
+  @@index([status])
+  @@index([anomalyScore])
+  @@map("transactions")
+}
+
+// Alert System
+model AlertInstance {
+  id            String   @id @default(cuid())
+  ruleId        String   // Reference to alert rule
+  userId        String
+  budgetId      String?  // Associated budget if applicable
+  type          String   // burn_rate, budget_threshold, spending_velocity, unusual_activity
+  severity      String   // low, medium, high, critical
+  title         String
+  message       String
+  data          String?  // JSON string with additional context data
+  resolved      Boolean  @default(false)
+  resolvedAt    DateTime?
+  lastNotifiedAt DateTime?
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ruleId])
+  @@index([budgetId])
+  @@index([type])
+  @@index([severity])
+  @@index([resolved])
+  @@index([createdAt])
+  @@map("alert_instances")
 }

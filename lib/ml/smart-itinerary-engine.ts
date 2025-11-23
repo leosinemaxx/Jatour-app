@@ -1,4 +1,4 @@
-// Smart Itinerary Creation Algorithm for JaTour
+ // Smart Itinerary Creation Algorithm for JaTour
 // ML-powered itinerary generation with intelligent scheduling and optimization
 
 import { mlEngine, MLRecommendation, UserPreferenceProfile } from './ml-engine';
@@ -77,6 +77,8 @@ export interface SmartDestination {
   predictedSatisfaction: number;
   crowdLevel?: 'low' | 'medium' | 'high';
   weatherSuitability?: number; // 0-1 scale
+  bestTimeToVisit?: string;
+  openingHours?: string;
   alternatives?: Array<{
     id: string;
     name: string;
@@ -101,11 +103,72 @@ export interface SmartItineraryResult {
     satisfactionOptimization: number; // percentage
     reasoning: string[];
   };
+  costVariability: {
+    seasonalAdjustments: SeasonalPricing[];
+    demandFactors: DemandPricing[];
+    currencyRates: CurrencyRate[];
+    appliedDiscounts: Discount[];
+    realTimeUpdates: RealTimePriceUpdate[];
+  };
+}
+
+export interface SeasonalPricing {
+  destinationId: string;
+  season: 'low' | 'shoulder' | 'high' | 'peak';
+  multiplier: number;
+  reason: string;
+}
+
+export interface DemandPricing {
+  destinationId: string;
+  demandLevel: 'low' | 'medium' | 'high' | 'extreme';
+  multiplier: number;
+  occupancyRate?: number;
+}
+
+export interface CurrencyRate {
+  from: string;
+  to: string;
+  rate: number;
+  lastUpdated: number;
+}
+
+export interface Discount {
+  type: 'group' | 'early_bird' | 'loyalty' | 'seasonal' | 'bulk';
+  percentage: number;
+  applicableTo: string[]; // destination IDs
+  conditions: string;
+}
+
+export interface RealTimePriceUpdate {
+  destinationId: string;
+  originalPrice: number;
+  currentPrice: number;
+  changeReason: string;
+  lastUpdated: number;
+}
+
+export interface ActivitySchedule {
+  id: string;
+  name: string;
+  category: string;
+  timeSlot: {
+    start: string;
+    end: string;
+    duration: number; // in minutes
+  };
+  dependencies: string[]; // activity IDs that must be completed before this
+  variableDuration: boolean;
+  minDuration: number;
+  maxDuration: number;
+  cost: number;
+  capacity: number;
+  currentBookings: number;
 }
 
 export class SmartItineraryEngine {
   private timeSlots = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
     '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
   ];
 
@@ -121,6 +184,11 @@ export class SmartItineraryEngine {
     'beach': 0.8,
     'mountain': 0.7
   };
+
+  // Dynamic optimization state
+  private optimizationCache = new Map<string, any>();
+  private lastOptimizationTime = 0;
+  private optimizationInterval = 300000; // 5 minutes
 
   createSmartItinerary(input: SmartItineraryInput): SmartItineraryResult {
     const profile = mlEngine.getUserProfile(input.userId);
@@ -147,7 +215,8 @@ export class SmartItineraryEngine {
     const mlInsights = this.calculateMLInsights(optimizedItinerary, profile, input);
     const optimization = this.calculateOptimizationMetrics(optimizedItinerary, input, budgetRecommendation);
     
-    // Step 5: Calculate totals
+    // Step 5: Calculate variable costs and totals
+    const costVariability = this.calculateCostVariability(optimizedItinerary, input);
     const totalCost = optimizedItinerary.reduce((sum, day) => sum + day.totalCost, 0);
     const totalDuration = optimizedItinerary.reduce((sum, day) => sum + day.totalTime, 0);
 
@@ -157,7 +226,8 @@ export class SmartItineraryEngine {
       totalDuration,
       budgetBreakdown: budgetRecommendation,
       mlInsights,
-      optimization
+      optimization,
+      costVariability
     };
   }
 
@@ -197,11 +267,28 @@ export class SmartItineraryEngine {
   ): SmartItineraryDay[] {
     const days: SmartItineraryDay[] = [];
     const constraints = input.constraints || {};
-    const destinationsPerDay = Math.ceil(destinations.length / input.preferences.days);
-    
+
+    // Ensure no empty destination arrays - distribute destinations evenly across all days
+    const availableDays = input.preferences.days;
+    const destinationsPerDay = Math.floor(destinations.length / availableDays);
+    const extraDestinations = destinations.length % availableDays;
+
+    let destinationIndex = 0;
+
     for (let day = 1; day <= input.preferences.days; day++) {
-      const dayDestinations = destinations.slice((day - 1) * destinationsPerDay, day * destinationsPerDay);
-      const optimizedDay = this.optimizeDaySchedule(dayDestinations, day, input, profile, constraints);
+      let dayDestinations: Array<SmartDestination & { mlScore: number }> = [];
+
+      // Calculate how many destinations this day should get
+      const baseCount = destinationsPerDay;
+      const extraCount = (day <= extraDestinations) ? 1 : 0;
+      const countForThisDay = baseCount + extraCount;
+
+      // Get destinations for this day
+      dayDestinations = destinations.slice(destinationIndex, destinationIndex + countForThisDay);
+      destinationIndex += countForThisDay;
+
+      // Optimize day schedule with fallback for empty days
+      const optimizedDay = this.optimizeDaySchedule(dayDestinations, day, input, profile, constraints, destinations);
       days.push(optimizedDay);
     }
 
@@ -218,26 +305,45 @@ export class SmartItineraryEngine {
     dayNumber: number,
     input: SmartItineraryInput,
     profile: UserPreferenceProfile | null,
-    constraints: any
+    constraints: any,
+    fullDestinations: Array<SmartDestination & { mlScore: number }>
   ): SmartItineraryDay {
     // Sort destinations by ML score and logical flow
     const sortedDestinations = this.sortDestinationsByOptimalFlow(destinations, constraints);
-    
+
     // Schedule destinations within the day
     const scheduledDestinations = this.scheduleDestinationsInDay(sortedDestinations, dayNumber, input, constraints);
-    
+
+    // If no destinations were scheduled for this day, try to add a fallback destination
+    // or ensure the day has some content (this handles cases where distribution logic creates empty days)
+    let finalDestinations = scheduledDestinations;
+    if (finalDestinations.length === 0 && fullDestinations.length > 0) {
+      // If we have destinations but none were scheduled (e.g., time constraints or insufficient destinations),
+      // force schedule at least one destination for the day using a random fallback
+      const randomIndex = Math.floor(Math.random() * fullDestinations.length);
+      const fallbackDest = fullDestinations[randomIndex];
+      if (fallbackDest) {
+        finalDestinations = [{
+          ...fallbackDest,
+          scheduledTime: constraints.preferredStartTime || '09:00',
+          mlScore: fallbackDest.mlScore,
+          predictedSatisfaction: fallbackDest.predictedSatisfaction
+        }];
+      }
+    }
+
     // Calculate costs and times
-    const totalCost = scheduledDestinations.reduce((sum, dest) => sum + dest.estimatedCost, 0);
-    const totalTime = scheduledDestinations.reduce((sum, dest) => sum + dest.duration, 0);
-    
+    const totalCost = finalDestinations.reduce((sum, dest) => sum + dest.estimatedCost, 0);
+    const totalTime = finalDestinations.reduce((sum, dest) => sum + dest.duration, 0);
+
     // Generate ML insights for the day
-    const mlConfidence = this.calculateDayMLConfidence(scheduledDestinations, profile);
-    const optimizationReasons = this.generateDayOptimizationReasons(scheduledDestinations, profile, constraints);
+    const mlConfidence = this.calculateDayMLConfidence(finalDestinations, profile);
+    const optimizationReasons = this.generateDayOptimizationReasons(finalDestinations, profile, constraints);
 
     return {
       day: dayNumber,
       date: this.calculateDate(input.preferences.startDate, dayNumber - 1),
-      destinations: scheduledDestinations,
+      destinations: finalDestinations,
       totalCost,
       totalTime,
       mlConfidence,
@@ -303,7 +409,7 @@ export class SmartItineraryEngine {
     destinations: Array<SmartDestination & { mlScore: number }>,
     dayNumber: number,
     input: SmartItineraryInput,
-    constraints: any
+    dayConstraints: any
   ): SmartDestination[] {
     const scheduled: SmartDestination[] = [];
     const constraints = input.constraints || {};
@@ -429,15 +535,26 @@ export class SmartItineraryEngine {
   }
 
   private getPredominantCity(destinations: SmartDestination[]): string {
+    if (destinations.length === 0) {
+      return 'Jakarta'; // Default city if no destinations
+    }
+    
     const cityCounts = new Map<string, number>();
     destinations.forEach(dest => {
       const city = dest.location.split(',')[0]; // Get city name before comma
       cityCounts.set(city, (cityCounts.get(city) || 0) + 1);
     });
     
-    return Array.from(cityCounts.entries()).reduce((a, b) => 
+    const cityArray = Array.from(cityCounts.entries());
+    if (cityArray.length === 0) {
+      return 'Jakarta'; // Fallback if no cities found
+    }
+    
+    const predominantCity = cityArray.reduce((a, b) => 
       cityCounts.get(a[0])! > cityCounts.get(b[0])! ? a : b
     )[0];
+    
+    return predominantCity;
   }
 
   private selectOptimalTransport(fromCity: string, toCity: string): string {
@@ -595,13 +712,869 @@ export class SmartItineraryEngine {
     const allDestinations = itinerary.flatMap(day => day.destinations);
     const avgRating = allDestinations.reduce((sum, d) => sum + d.rating, 0) / allDestinations.length;
     const avgMLScore = allDestinations.reduce((sum, d) => sum + d.mlScore, 0) / allDestinations.length;
-    
+
     // Combine rating and ML personalization score
     const baseSatisfaction = 3.5; // Neutral rating
     const ratingBoost = (avgRating - baseSatisfaction) * 20; // Convert to percentage
     const mlBoost = avgMLScore * 30; // ML personalization contribution
-    
+
     return Math.max(0, ratingBoost + mlBoost);
+  }
+
+  // === COST VARIABILITY AND ACTIVITY INTEGRATION ENHANCEMENTS ===
+
+  private calculateCostVariability(itinerary: SmartItineraryDay[], input: SmartItineraryInput): any {
+    const allDestinations = itinerary.flatMap(day => day.destinations);
+
+    return {
+      seasonalAdjustments: this.calculateSeasonalPricing(allDestinations, input),
+      demandFactors: this.calculateDemandPricing(allDestinations),
+      currencyRates: this.getCurrencyRates(input.preferences),
+      appliedDiscounts: this.calculateDiscounts(allDestinations, input),
+      realTimeUpdates: this.getRealTimePriceUpdates(allDestinations)
+    };
+  }
+
+  private calculateSeasonalPricing(destinations: SmartDestination[], input: SmartItineraryInput): SeasonalPricing[] {
+    const startDate = new Date(input.preferences.startDate);
+    const month = startDate.getMonth() + 1; // 1-12
+
+    // Indonesian seasonal patterns
+    const seasonalMultipliers: Record<number, { season: SeasonalPricing['season'], multiplier: number }> = {
+      1: { season: 'high', multiplier: 1.3 }, // January - Peak season
+      2: { season: 'high', multiplier: 1.3 }, // February - Peak season
+      6: { season: 'shoulder', multiplier: 1.1 }, // June - School holidays
+      7: { season: 'shoulder', multiplier: 1.1 }, // July - School holidays
+      8: { season: 'shoulder', multiplier: 1.1 }, // August - School holidays
+      12: { season: 'peak', multiplier: 1.5 }, // December - Christmas/New Year
+    };
+
+    const defaultSeason = { season: 'low' as const, multiplier: 0.9 };
+
+    return destinations.map(dest => {
+      const seasonal = seasonalMultipliers[month] || defaultSeason;
+      return {
+        destinationId: dest.id,
+        season: seasonal.season,
+        multiplier: seasonal.multiplier,
+        reason: `Traveling during ${seasonal.season} season`
+      };
+    });
+  }
+
+  private calculateDemandPricing(destinations: SmartDestination[]): DemandPricing[] {
+    return destinations.map(dest => {
+      // Simulate demand based on rating and category popularity
+      const baseDemand = dest.rating > 4.5 ? 'high' : dest.rating > 4.0 ? 'medium' : 'low';
+      const categoryMultiplier = (this.categoryWeights as any)[dest.category] || 1.0;
+
+      let demandLevel: DemandPricing['demandLevel'] = 'low';
+      let multiplier = 1.0;
+
+      if (baseDemand === 'high' && categoryMultiplier > 0.8) {
+        demandLevel = 'extreme';
+        multiplier = 1.4;
+      } else if (baseDemand === 'high') {
+        demandLevel = 'high';
+        multiplier = 1.2;
+      } else if (baseDemand === 'medium') {
+        demandLevel = 'medium';
+        multiplier = 1.1;
+      }
+
+      return {
+        destinationId: dest.id,
+        demandLevel,
+        multiplier,
+        occupancyRate: Math.random() * 100 // Simulated occupancy
+      };
+    });
+  }
+
+  private getCurrencyRates(preferences: any): CurrencyRate[] {
+    // Simplified currency rates (in real app, fetch from API)
+    const rates: CurrencyRate[] = [
+      { from: 'IDR', to: 'USD', rate: 0.000067, lastUpdated: Date.now() },
+      { from: 'USD', to: 'IDR', rate: 14950, lastUpdated: Date.now() },
+      { from: 'IDR', to: 'EUR', rate: 0.000061, lastUpdated: Date.now() },
+      { from: 'EUR', to: 'IDR', rate: 16350, lastUpdated: Date.now() }
+    ];
+
+    return rates;
+  }
+
+  private calculateDiscounts(destinations: SmartDestination[], input: SmartItineraryInput): Discount[] {
+    const discounts: Discount[] = [];
+
+    // Group discount for larger parties
+    if (input.preferences.travelers >= 4) {
+      discounts.push({
+        type: 'group',
+        percentage: Math.min(input.preferences.travelers * 2, 15),
+        applicableTo: destinations.map(d => d.id),
+        conditions: `Group discount for ${input.preferences.travelers} travelers`
+      });
+    }
+
+    // Early bird discount (booked more than 30 days in advance)
+    const daysUntilTravel = Math.ceil((new Date(input.preferences.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (daysUntilTravel > 30) {
+      discounts.push({
+        type: 'early_bird',
+        percentage: 10,
+        applicableTo: destinations.map(d => d.id),
+        conditions: 'Booked more than 30 days in advance'
+      });
+    }
+
+    // Bulk destination discount
+    if (destinations.length >= 5) {
+      discounts.push({
+        type: 'bulk',
+        percentage: 8,
+        applicableTo: destinations.map(d => d.id),
+        conditions: 'Visiting 5 or more destinations'
+      });
+    }
+
+    return discounts;
+  }
+
+  private getRealTimePriceUpdates(destinations: SmartDestination[]): RealTimePriceUpdate[] {
+    return destinations.map(dest => {
+      // Simulate real-time price changes
+      const changePercent = (Math.random() - 0.5) * 0.2; // -10% to +10%
+      const currentPrice = dest.estimatedCost * (1 + changePercent);
+
+      return {
+        destinationId: dest.id,
+        originalPrice: dest.estimatedCost,
+        currentPrice,
+        changeReason: changePercent > 0 ? 'Increased demand' : 'Available deals',
+        lastUpdated: Date.now()
+      };
+    });
+  }
+
+  // Activity Integration Methods
+  createActivitySchedule(itinerary: SmartItineraryDay[], activities: ActivitySchedule[]): SmartItineraryDay[] {
+    return itinerary.map(day => ({
+      ...day,
+      destinations: day.destinations.map(dest => ({
+        ...dest,
+        activities: this.scheduleActivitiesForDestination(dest, activities, day)
+      }))
+    }));
+  }
+
+  private scheduleActivitiesForDestination(
+    destination: SmartDestination,
+    allActivities: ActivitySchedule[],
+    day: SmartItineraryDay
+  ): ActivitySchedule[] {
+    // Find activities related to this destination
+    const relevantActivities = allActivities.filter(activity =>
+      activity.category.toLowerCase().includes(destination.category.toLowerCase()) ||
+      destination.tags.some(tag => activity.name.toLowerCase().includes(tag.toLowerCase()))
+    );
+
+    if (relevantActivities.length === 0) return [];
+
+    // Schedule activities within the day's time constraints
+    const scheduledActivities: ActivitySchedule[] = [];
+    let currentTime = this.parseTime(destination.scheduledTime);
+
+    for (const activity of relevantActivities) {
+      const activityEndTime = currentTime + activity.timeSlot.duration;
+
+      // Check if activity fits within day and destination time
+      const destEndTime = this.parseTime(destination.scheduledTime) + destination.duration;
+
+      if (activityEndTime <= destEndTime && activityEndTime <= this.parseTime('18:00')) {
+        const scheduledActivity = {
+          ...activity,
+          timeSlot: {
+            ...activity.timeSlot,
+            start: this.formatTime(currentTime),
+            end: this.formatTime(activityEndTime)
+          }
+        };
+
+        scheduledActivities.push(scheduledActivity);
+        currentTime = activityEndTime + 30; // 30 min buffer
+      }
+
+      if (scheduledActivities.length >= 2) break; // Limit activities per destination
+    }
+
+    return scheduledActivities;
+  }
+
+  // Enhanced cost calculation with variability
+  calculateVariableCost(
+    baseCost: number,
+    destinationId: string,
+    input: SmartItineraryInput,
+    costVariability: any
+  ): number {
+    let adjustedCost = baseCost;
+
+    // Apply seasonal pricing
+    const seasonal = costVariability.seasonalAdjustments.find((s: SeasonalPricing) => s.destinationId === destinationId);
+    if (seasonal) {
+      adjustedCost *= seasonal.multiplier;
+    }
+
+    // Apply demand pricing
+    const demand = costVariability.demandFactors.find((d: DemandPricing) => d.destinationId === destinationId);
+    if (demand) {
+      adjustedCost *= demand.multiplier;
+    }
+
+    // Apply real-time updates
+    const realTime = costVariability.realTimeUpdates.find((r: RealTimePriceUpdate) => r.destinationId === destinationId);
+    if (realTime) {
+      adjustedCost = realTime.currentPrice;
+    }
+
+    // Apply discounts
+    const applicableDiscounts = costVariability.appliedDiscounts.filter((d: Discount) =>
+      d.applicableTo.includes(destinationId)
+    );
+
+    for (const discount of applicableDiscounts) {
+      adjustedCost *= (1 - discount.percentage / 100);
+    }
+
+    // Currency conversion if needed
+    const currency = (input.preferences as any).currency;
+    if (currency && currency !== 'IDR') {
+      const rate = costVariability.currencyRates.find((r: CurrencyRate) =>
+        r.from === 'IDR' && r.to === currency
+      );
+      if (rate) {
+        adjustedCost *= rate.rate;
+      }
+    }
+
+    return Math.round(adjustedCost);
+  }
+
+  // Data expansion capabilities
+  expandItineraryWithRealData(
+    input: SmartItineraryInput,
+    externalDataSources: any[]
+  ): SmartItineraryInput {
+    // Expand destinations from external data sources
+    const expandedDestinations = [...input.availableDestinations];
+
+    for (const dataSource of externalDataSources) {
+      if (dataSource.destinations) {
+        expandedDestinations.push(...dataSource.destinations);
+      }
+    }
+
+    // Remove duplicates based on ID
+    const uniqueDestinations = expandedDestinations.filter(
+      (dest, index, self) => self.findIndex(d => d.id === dest.id) === index
+    );
+
+    return {
+      ...input,
+      availableDestinations: uniqueDestinations
+    };
+  }
+
+  // Performance optimization: batch processing
+  processBatchItineraries(inputs: SmartItineraryInput[]): SmartItineraryResult[] {
+    return inputs.map(input => this.createSmartItinerary(input));
+  }
+
+  // Real-time price monitoring
+  startPriceMonitoring(destinationIds: string[], callback: (updates: RealTimePriceUpdate[]) => void): () => void {
+    const interval = setInterval(() => {
+      const updates = destinationIds.map(id => ({
+        destinationId: id,
+        originalPrice: Math.random() * 1000000, // Simulated
+        currentPrice: Math.random() * 1000000,
+        changeReason: 'Market fluctuation',
+        lastUpdated: Date.now()
+      }));
+
+      callback(updates);
+    }, 60000); // Update every minute
+
+    // Return cleanup function
+    return () => clearInterval(interval);
+  }
+
+  // === EAST JAVA SPECIFIC ITINERARY GENERATION ===
+
+  /**
+   * Generate optimized East Java itinerary using compiled destinations
+   */
+  createEastJavaItinerary(input: SmartItineraryInput): SmartItineraryResult {
+    try {
+      // Validate East Java preferences
+      this.validateEastJavaInput(input);
+
+      // Get East Java specific destinations
+      const eastJavaDestinations = this.getEastJavaDestinations(input);
+
+      // Create enhanced input with East Java data
+      const enhancedInput: SmartItineraryInput = {
+        ...input,
+        availableDestinations: eastJavaDestinations
+      };
+
+      // Generate itinerary using main algorithm
+      const result = this.createSmartItinerary(enhancedInput);
+
+      // Add East Java specific optimizations
+      return this.optimizeForEastJava(result, input);
+
+    } catch (error) {
+      console.error('Error generating East Java itinerary:', error);
+      throw new Error(`Failed to generate East Java itinerary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Validate input for East Java itinerary generation
+   */
+  private validateEastJavaInput(input: SmartItineraryInput): void {
+    if (!input.preferences.cities || input.preferences.cities.length === 0) {
+      throw new Error('At least one East Java city must be specified');
+    }
+
+    const validEastJavaCities = [
+      'Surabaya', 'Malang', 'Batu', 'Probolinggo', 'Lumajang', 'Blitar',
+      'Kediri', 'Madiun', 'Nganjuk', 'Jember', 'Bojonegoro', 'Pacitan',
+      'Pamekasan', 'Sampang', 'Sumenep', 'Situbondo', 'Trenggalek'
+    ];
+
+    const invalidCities = input.preferences.cities.filter(city =>
+      !validEastJavaCities.includes(city)
+    );
+
+    if (invalidCities.length > 0) {
+      throw new Error(`Invalid cities for East Java itinerary: ${invalidCities.join(', ')}`);
+    }
+
+    if (input.preferences.days < 1 || input.preferences.days > 14) {
+      throw new Error('East Java itinerary must be between 1-14 days');
+    }
+
+    if (input.preferences.budget < 1000000) {
+      throw new Error('Minimum budget for East Java itinerary is IDR 1,000,000');
+    }
+  }
+
+  /**
+   * Get compiled East Java destinations with cost estimates
+   */
+  private getEastJavaDestinations(input: SmartItineraryInput): Array<{
+    id: string;
+    name: string;
+    location: string;
+    category: string;
+    estimatedCost: number;
+    duration: number;
+    coordinates?: { lat: number; lng: number };
+    tags: string[];
+    rating: number;
+    openingHours?: string;
+    bestTimeToVisit?: string;
+  }> {
+    // East Java destinations with cost estimates (based on compiled data)
+    const eastJavaDestinations = [
+      // Mountains & Volcanoes
+      {
+        id: 'bromo',
+        name: 'Gunung Bromo',
+        location: 'Probolinggo',
+        category: 'Mountain',
+        estimatedCost: 150000,
+        duration: 480, // 8 hours
+        coordinates: { lat: -7.9425, lng: 112.9530 },
+        tags: ['volcano', 'sunrise', 'adventure', 'photography'],
+        rating: 4.8,
+        openingHours: '24 hours',
+        bestTimeToVisit: '04:00-08:00'
+      },
+      {
+        id: 'semeru',
+        name: 'Gunung Semeru',
+        location: 'Lumajang',
+        category: 'Mountain',
+        estimatedCost: 200000,
+        duration: 720, // 12 hours
+        coordinates: { lat: -8.1080, lng: 112.9219 },
+        tags: ['hiking', 'volcano', 'extreme', 'nature'],
+        rating: 4.7,
+        openingHours: '24 hours',
+        bestTimeToVisit: '06:00-18:00'
+      },
+      {
+        id: 'arjuno',
+        name: 'Gunung Arjuno',
+        location: 'Malang',
+        category: 'Mountain',
+        estimatedCost: 100000,
+        duration: 360, // 6 hours
+        coordinates: { lat: -7.7333, lng: 112.5833 },
+        tags: ['hiking', 'nature', 'beginner-friendly'],
+        rating: 4.6,
+        openingHours: '24 hours',
+        bestTimeToVisit: '06:00-16:00'
+      },
+
+      // Beaches
+      {
+        id: 'klayar',
+        name: 'Pantai Klayar',
+        location: 'Pacitan',
+        category: 'Beach',
+        estimatedCost: 50000,
+        duration: 180, // 3 hours
+        coordinates: { lat: -8.2553, lng: 111.2461 },
+        tags: ['beach', 'photography', 'relaxation', 'sunset'],
+        rating: 4.6,
+        openingHours: '06:00-18:00',
+        bestTimeToVisit: '16:00-18:00'
+      },
+      {
+        id: 'balekambang',
+        name: 'Pantai Balekambang',
+        location: 'Malang',
+        category: 'Beach',
+        estimatedCost: 75000,
+        duration: 240, // 4 hours
+        coordinates: { lat: -8.4089, lng: 112.5300 },
+        tags: ['beach', 'snorkeling', 'family', 'nature'],
+        rating: 4.5,
+        openingHours: '06:00-18:00',
+        bestTimeToVisit: '08:00-16:00'
+      },
+      {
+        id: 'g-land',
+        name: 'Pantai Plengkung (G-Land)',
+        location: 'Banyuwangi',
+        category: 'Beach',
+        estimatedCost: 250000,
+        duration: 300, // 5 hours
+        coordinates: { lat: -8.8167, lng: 114.3167 },
+        tags: ['surfing', 'beach', 'extreme', 'adventure'],
+        rating: 4.7,
+        openingHours: '24 hours',
+        bestTimeToVisit: '06:00-18:00'
+      },
+
+      // Temples & Cultural Sites
+      {
+        id: 'penataran',
+        name: 'Candi Penataran',
+        location: 'Blitar',
+        category: 'Temple',
+        estimatedCost: 30000,
+        duration: 120, // 2 hours
+        coordinates: { lat: -8.0833, lng: 112.2167 },
+        tags: ['temple', 'history', 'hindu', 'culture'],
+        rating: 4.5,
+        openingHours: '06:00-17:00',
+        bestTimeToVisit: '08:00-16:00'
+      },
+      {
+        id: 'jago',
+        name: 'Candi Jago',
+        location: 'Malang',
+        category: 'Temple',
+        estimatedCost: 25000,
+        duration: 90, // 1.5 hours
+        coordinates: { lat: -8.2500, lng: 112.6333 },
+        tags: ['temple', 'history', 'ramayana', 'culture'],
+        rating: 4.4,
+        openingHours: '06:00-17:00',
+        bestTimeToVisit: '08:00-16:00'
+      },
+
+      // Cities & Urban
+      {
+        id: 'malang-city',
+        name: 'Kota Malang',
+        location: 'Malang',
+        category: 'City',
+        estimatedCost: 100000,
+        duration: 480, // 8 hours
+        coordinates: { lat: -7.9667, lng: 112.6333 },
+        tags: ['city', 'culture', 'food', 'shopping'],
+        rating: 4.6,
+        openingHours: '24 hours',
+        bestTimeToVisit: '08:00-22:00'
+      },
+      {
+        id: 'surabaya-city',
+        name: 'Kota Surabaya',
+        location: 'Surabaya',
+        category: 'City',
+        estimatedCost: 150000,
+        duration: 480, // 8 hours
+        coordinates: { lat: -7.2575, lng: 112.7521 },
+        tags: ['city', 'history', 'food', 'shopping'],
+        rating: 4.5,
+        openingHours: '24 hours',
+        bestTimeToVisit: '08:00-22:00'
+      },
+      {
+        id: 'batu-city',
+        name: 'Kota Batu',
+        location: 'Batu',
+        category: 'City',
+        estimatedCost: 120000,
+        duration: 360, // 6 hours
+        coordinates: { lat: -7.8667, lng: 112.5167 },
+        tags: ['city', 'nature', 'food', 'apple'],
+        rating: 4.6,
+        openingHours: '24 hours',
+        bestTimeToVisit: '08:00-20:00'
+      },
+
+      // Waterfalls
+      {
+        id: 'coban-rondo',
+        name: 'Air Terjun Coban Rondo',
+        location: 'Malang',
+        category: 'Waterfall',
+        estimatedCost: 40000,
+        duration: 180, // 3 hours
+        coordinates: { lat: -8.0000, lng: 112.5833 },
+        tags: ['waterfall', 'nature', 'hiking', 'photography'],
+        rating: 4.7,
+        openingHours: '07:00-17:00',
+        bestTimeToVisit: '08:00-16:00'
+      },
+      {
+        id: 'madakaripura',
+        name: 'Air Terjun Madakaripura',
+        location: 'Probolinggo',
+        category: 'Waterfall',
+        estimatedCost: 75000,
+        duration: 240, // 4 hours
+        coordinates: { lat: -7.9167, lng: 112.8833 },
+        tags: ['waterfall', 'legend', 'nature', 'hiking'],
+        rating: 4.8,
+        openingHours: '08:00-16:00',
+        bestTimeToVisit: '08:00-14:00'
+      },
+
+      // Lakes
+      {
+        id: 'ranu-pani',
+        name: 'Ranu Pani',
+        location: 'Lumajang',
+        category: 'Lake',
+        estimatedCost: 50000,
+        duration: 180, // 3 hours
+        coordinates: { lat: -8.1080, lng: 112.9219 },
+        tags: ['lake', 'basecamp', 'nature', 'semeru'],
+        rating: 4.8,
+        openingHours: '24 hours',
+        bestTimeToVisit: '06:00-18:00'
+      },
+
+      // National Parks
+      {
+        id: 'bromo-tengger-semeru',
+        name: 'Taman Nasional Bromo Tengger Semeru',
+        location: 'Probolinggo',
+        category: 'National Park',
+        estimatedCost: 200000,
+        duration: 600, // 10 hours
+        coordinates: { lat: -8.0000, lng: 112.9000 },
+        tags: ['national-park', 'volcano', 'nature', 'conservation'],
+        rating: 4.9,
+        openingHours: '24 hours',
+        bestTimeToVisit: '04:00-18:00'
+      }
+    ];
+
+    // Filter by user preferences
+    return eastJavaDestinations.filter(dest => {
+      // Filter by cities
+      if (input.preferences.cities && input.preferences.cities.length > 0) {
+        if (!input.preferences.cities.includes(dest.location)) {
+          return false;
+        }
+      }
+
+      // Filter by interests/themes
+      if (input.preferences.interests && input.preferences.interests.length > 0) {
+        const hasMatchingInterest = input.preferences.interests.some(interest =>
+          dest.tags.includes(interest.toLowerCase())
+        );
+        if (!hasMatchingInterest) return false;
+      }
+
+      // Filter by preferred spots
+      if (input.preferences.preferredSpots && input.preferences.preferredSpots.length > 0) {
+        if (!input.preferences.preferredSpots.includes(dest.id)) {
+          return false;
+        }
+      }
+
+      // Filter by budget constraints
+      const maxDestCost = input.preferences.budget * 0.3; // Max 30% of budget per destination
+      if (dest.estimatedCost > maxDestCost) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * Optimize itinerary specifically for East Java travel patterns
+   */
+  private optimizeForEastJava(result: SmartItineraryResult, input: SmartItineraryInput): SmartItineraryResult {
+    // Add East Java specific recommendations
+    const eastJavaRecommendations = [
+      'Consider visiting during dry season (April-September) for better weather',
+      'Bromo sunrise tours are most popular - book early',
+      'Try local East Java specialties like rawon, rujak, and pecel',
+      'Use travel apps for real-time traffic updates between cities',
+      'Consider homestays in rural areas for authentic cultural experience'
+    ];
+
+    // Add seasonal considerations for East Java
+    const month = new Date(input.preferences.startDate).getMonth() + 1;
+    if ([11, 12, 1, 2, 3].includes(month)) {
+      eastJavaRecommendations.push('Rainy season: Prepare for wet conditions, especially in mountains');
+    } else if ([6, 7, 8, 9].includes(month)) {
+      eastJavaRecommendations.push('Dry season: Perfect for outdoor activities and beach visits');
+    }
+
+    return {
+      ...result,
+      mlInsights: {
+        ...result.mlInsights,
+        recommendations: [...result.mlInsights.recommendations, ...eastJavaRecommendations]
+      }
+    };
+  }
+
+  /**
+   * Generate East Java hotel selections based on preferences
+   */
+  selectEastJavaHotels(input: SmartItineraryInput): Array<{
+    day: number;
+    accommodation: {
+      name: string;
+      type: string;
+      cost: number;
+      location: string;
+      rating: number;
+      amenities: string[];
+    };
+  }> {
+    const hotelSelections = [];
+    const cities = input.preferences.cities;
+
+    for (let day = 1; day <= input.preferences.days; day++) {
+      // Rotate through cities for multi-city itineraries
+      const cityIndex = (day - 1) % cities.length;
+      const city = cities[cityIndex];
+
+      const hotels = this.getHotelsForCity(city, input.preferences.accommodationType);
+      const selectedHotel = hotels[Math.floor(Math.random() * hotels.length)];
+
+      hotelSelections.push({
+        day,
+        accommodation: selectedHotel
+      });
+    }
+
+    return hotelSelections;
+  }
+
+  /**
+   * Get hotel options for specific East Java cities
+   */
+  private getHotelsForCity(city: string, type: 'budget' | 'moderate' | 'luxury'): Array<{
+    name: string;
+    type: string;
+    cost: number;
+    location: string;
+    rating: number;
+    amenities: string[];
+  }> {
+    const hotelData: Record<string, Array<{
+      name: string;
+      type: string;
+      cost: number;
+      location: string;
+      rating: number;
+      amenities: string[];
+    }>> = {
+      'Malang': [
+        {
+          name: 'Hotel Tugu Malang',
+          type: 'moderate',
+          cost: 450000,
+          location: 'Malang',
+          rating: 4.2,
+          amenities: ['wifi', 'pool', 'restaurant', 'parking']
+        },
+        {
+          name: 'Savana Hotel Malang',
+          type: 'luxury',
+          cost: 750000,
+          location: 'Malang',
+          rating: 4.5,
+          amenities: ['wifi', 'pool', 'spa', 'restaurant', 'gym', 'parking']
+        },
+        {
+          name: 'Hotel Santika Premiere Malang',
+          type: 'luxury',
+          cost: 650000,
+          location: 'Malang',
+          rating: 4.3,
+          amenities: ['wifi', 'pool', 'restaurant', 'business-center', 'parking']
+        }
+      ],
+      'Batu': [
+        {
+          name: 'Golden Tulip Holland Resort Batu',
+          type: 'luxury',
+          cost: 1200000,
+          location: 'Batu',
+          rating: 4.7,
+          amenities: ['wifi', 'pool', 'spa', 'restaurant', 'kids-club', 'parking']
+        },
+        {
+          name: 'Arjuna Hotel & Resort',
+          type: 'moderate',
+          cost: 350000,
+          location: 'Batu',
+          rating: 4.1,
+          amenities: ['wifi', 'pool', 'restaurant', 'parking']
+        }
+      ],
+      'Surabaya': [
+        {
+          name: 'Hotel Majapahit Surabaya',
+          type: 'luxury',
+          cost: 800000,
+          location: 'Surabaya',
+          rating: 4.5,
+          amenities: ['wifi', 'pool', 'spa', 'restaurant', 'business-center', 'parking']
+        },
+        {
+          name: 'Swiss-Belresort Tretes',
+          type: 'moderate',
+          cost: 400000,
+          location: 'Tretes',
+          rating: 4.4,
+          amenities: ['wifi', 'pool', 'restaurant', 'parking']
+        }
+      ],
+      'Probolinggo': [
+        {
+          name: 'Hotel Bromo Permai',
+          type: 'moderate',
+          cost: 300000,
+          location: 'Probolinggo',
+          rating: 4.0,
+          amenities: ['wifi', 'restaurant', 'parking']
+        },
+        {
+          name: 'Cemara Indah Hotel',
+          type: 'budget',
+          cost: 150000,
+          location: 'Probolinggo',
+          rating: 3.8,
+          amenities: ['wifi', 'parking']
+        }
+      ]
+    };
+
+    const cityHotels = hotelData[city] || [];
+    return cityHotels.filter(hotel => hotel.type === type);
+  }
+
+  /**
+   * Enhanced error handling for East Java itineraries
+   */
+  private handleEastJavaItineraryError(error: any, input: SmartItineraryInput): SmartItineraryResult {
+    console.error('East Java itinerary generation error:', error);
+
+    // Provide fallback itinerary
+    const fallbackDays: SmartItineraryDay[] = [];
+    for (let day = 1; day <= Math.min(input.preferences.days, 3); day++) {
+      fallbackDays.push({
+        day,
+        date: this.calculateDate(input.preferences.startDate, day - 1),
+        destinations: [{
+          id: 'fallback',
+          name: 'Explore Local Area',
+          category: 'Cultural',
+          location: input.preferences.cities[0] || 'Malang',
+          coordinates: { lat: -7.9667, lng: 112.6333 },
+          scheduledTime: '09:00',
+          duration: 240,
+          estimatedCost: 100000,
+          rating: 4.0,
+          tags: ['local', 'culture'],
+          mlScore: 0.5,
+          predictedSatisfaction: 0.7
+        }],
+        totalCost: 100000,
+        totalTime: 240,
+        mlConfidence: 0.3,
+        optimizationReasons: ['Fallback itinerary due to processing error']
+      });
+    }
+
+    return {
+      itinerary: fallbackDays,
+      totalCost: fallbackDays.reduce((sum, day) => sum + day.totalCost, 0),
+      totalDuration: fallbackDays.reduce((sum, day) => sum + day.totalTime, 0),
+      budgetBreakdown: {
+        totalBudget: input.preferences.budget,
+        categoryBreakdown: {
+          accommodation: { allocated: 0, recommended: 0, savings: 0 },
+          transportation: { allocated: 0, recommended: 0, savings: 0 },
+          food: { allocated: 0, recommended: 0, savings: 0 },
+          activities: { allocated: fallbackDays.reduce((sum, day) => sum + day.totalCost, 0), recommended: fallbackDays.reduce((sum, day) => sum + day.totalCost, 0), savings: 0 },
+          miscellaneous: { allocated: 0, recommended: 0, savings: 0 }
+        },
+        optimizations: [],
+        confidence: 0.3,
+        reasoning: ['Fallback mode activated due to error']
+      },
+      mlInsights: {
+        personalizationScore: 0.3,
+        predictedUserSatisfaction: 0.5,
+        riskFactors: ['System processing error occurred', 'Using fallback recommendations'],
+        recommendations: [
+          'Try again with simplified preferences',
+          'Consider contacting support for assistance',
+          'Check network connectivity and try again'
+        ]
+      },
+      optimization: {
+        timeOptimization: 0,
+        costOptimization: 0,
+        satisfactionOptimization: 0,
+        reasoning: ['Fallback mode activated due to error']
+      },
+      costVariability: {
+        seasonalAdjustments: [],
+        demandFactors: [],
+        currencyRates: [],
+        appliedDiscounts: [],
+        realTimeUpdates: []
+      }
+    };
   }
 }
 

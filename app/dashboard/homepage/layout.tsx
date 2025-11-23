@@ -2,6 +2,9 @@
 
 import "@/app/globals.css";
 
+// Force dynamic rendering to avoid SSR issues with client-side contexts
+export const dynamic = 'force-dynamic';
+
 import { NotificationProvider, useNotification } from "@/lib/components/NotificationProvider";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { SmartItineraryProvider } from "@/lib/contexts/SmartItineraryContext";

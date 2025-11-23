@@ -117,7 +117,7 @@ export function useDestination(id: string) {
 
 // Weather hook
 export function useWeather(city?: string) {
-  return useData<Weather | Weather[]>(
+  return useData<Weather | Weather[] | null>(
     () => city ? api.weather.getByCity(city) : api.weather.getAll(),
     [city]
   );
@@ -127,7 +127,7 @@ export function useWeather(city?: string) {
 export function useWallet() {
   const { user } = useAuth();
   
-  return useData<Wallet>(
+  return useData<Wallet | null>(
     () => api.wallet.getByUserId(user?.id || ""),
     [user?.id]
   );

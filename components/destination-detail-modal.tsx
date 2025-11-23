@@ -65,12 +65,14 @@ export default function DestinationDetailModal({
       const fetchDestinationDetails = async () => {
         setLoadingReviews(true);
         try {
-          const data = await apiClient.getDestination(destination.id);
-          if (data && data.reviews) {
-            setReviews(data.reviews);
-          } else {
-            setReviews([]);
-          }
+          // TODO: Implement reviews fetching from API
+          // const response = await apiClient.getDestination(destination.id);
+          // if (response && response.reviews) {
+          //   setReviews(response.reviews);
+          // } else {
+          //   setReviews([]);
+          // }
+          setReviews([]);
         } catch (error) {
           console.error("Failed to fetch destination details:", error);
           setReviews([]);
@@ -221,7 +223,7 @@ export default function DestinationDetailModal({
                         {destination.rating?.toFixed(1) || "N/A"}
                       </Badge>
                       {destination.priceRange && (
-                        <Badge className={priceRangeColors[destination.priceRange] || priceRangeColors.moderate}>
+                        <Badge className={priceRangeColors[destination.priceRange as keyof typeof priceRangeColors] || priceRangeColors.moderate}>
                           <DollarSign className="h-3 w-3 mr-1" />
                           {destination.priceRange}
                         </Badge>

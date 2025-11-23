@@ -26,11 +26,11 @@ async function resetDemoPassword() {
         password: hashedPassword,
         fullName: 'Demo User',
         phone: '+6281234567890',
-        preferences: {
+        preferences: JSON.stringify({
           language: 'id',
           notifications: true,
           theme: 'light',
-        },
+        }),
       },
     });
     

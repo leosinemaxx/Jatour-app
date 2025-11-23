@@ -386,8 +386,8 @@ export default function ItineraryValidator({
               <div>
                 <h3 className="text-xl font-bold">Itinerary Validation Score</h3>
                 <p className="text-white/80 text-sm">
-                  {summary?.overallScore >= 80 ? 'Excellent! Ready for travel' : 
-                   summary?.overallScore >= 60 ? 'Good, with room for improvement' :
+                  {(summary?.overallScore ?? 0) >= 80 ? 'Excellent! Ready for travel' :
+                   (summary?.overallScore ?? 0) >= 60 ? 'Good, with room for improvement' :
                    'Needs attention before travel'}
                 </p>
               </div>
